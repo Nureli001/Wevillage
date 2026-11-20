@@ -104,13 +104,14 @@ const firebaseConfig = {
   appId: "1:790485485366:web:8b4ead34a2208620601597"
 };
 
-// ---------- World settings ----------
+// ---------- Settings ----------
 const ROOM_ID = "main";
 const W = 1000, H = 640;      // world size in units
 const VW = 480;               // visible width in units (camera)
 const SPEED = 150;            // units per second
 const R = 12;                 // player collision radius
 const SEND_MS = 100;          // network update throttle while moving
+const IDLE_MS = 20000;        // character is removed after this much inactivity
 
 const CHARS = {
   boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 430, y: 330 } },
@@ -121,11 +122,11 @@ const CHARS = {
 const LAKE = { cx: 120, cy: 480, rx: 125, ry: 80 };
 const FALL = { x0: 62, x1: 124, y0: 150, y1: 402 };
 
-// Obstacles (collision)
+// Collision obstacles
 const OBST = [
-  { t: "rect", x: 0, y: 0, w: 165, h: 150 },                 // cliff
+  { t: "rect", x: 0, y: 0, w: 165, h: 150 },                                   // cliff
   { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 }, // waterfall
-  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry }
+  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry }            // lake
 ];
 const TREES = [[300,120],[380,220],[860,140],[930,300],[720,560],[470,560],[250,260],[900,520]];
 TREES.forEach(([x, y]) => OBST.push({ t: "circ", x, y, r: 12 }));
@@ -355,17 +356,18 @@ function drawChar(g, p, t, label) {
 
   // arms (behind body)
   g.fillStyle = "#f6cba0";
-  circ(g, x - 9, cy - 1 - sw * 0.6, 2.8);
-  circ(g, x + 9, cy - 1 + sw * 0.6, 2.8);
+  const aw = isBoy ? 10.5 : 9;
+  circ(g, x - aw, cy - 1 - sw * 0.6, 2.8);
+  circ(g, x + aw, cy - 1 + sw * 0.6, 2.8);
 
   // body
   if (isBoy) {
-    g.fillStyle = CHARS.boy.color;
-    rr(g, x - 8, cy - 6, 16, 12, 4);
-    g.fillStyle = "#5a3a1e";
-    rr(g, x - 8, cy + 2, 16, 2, 1);
+    g.fillStyle = CHARS.boy.color;             // blue shirt, broader shoulders
+    rr(g, x - 9, cy - 6, 18, 12, 4);
+    g.fillStyle = "#5a3a1e";                   // belt
+    rr(g, x - 9, cy + 2, 18, 2, 1);
   } else {
-    g.fillStyle = CHARS.girl.color;
+    g.fillStyle = CHARS.girl.color;            // dress
     g.beginPath();
     g.moveTo(x - 6, cy - 6);
     g.lineTo(x + 6, cy - 6);
@@ -377,37 +379,42 @@ function drawChar(g, p, t, label) {
   }
 
   const hy = cy - 16; // head center
-  const hc = isBoy ? "#4a2e16" : "#7a3e1d";
 
-  // girl: long hair and ponytail behind the head
+  // girl: long hair behind the head
   if (!isBoy) {
-    g.fillStyle = hc;
+    g.fillStyle = "#7a3e1d";
     g.beginPath(); g.ellipse(x, hy + 4, 11, 12, 0, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.ellipse(x - f * 10, hy - 2, 3.5, 7, 0, 0, Math.PI * 2); g.fill();
   }
 
   // head
   g.fillStyle = "#f6cba0";
   circ(g, x, hy, 9.5);
 
-  // hair cap and fringe
-  g.fillStyle = hc;
-  g.beginPath(); g.arc(x, hy, 10, Math.PI * 1.02, Math.PI * 1.98); g.closePath(); g.fill();
   if (isBoy) {
-    g.beginPath(); g.ellipse(x + f * 2, hy - 6.5, 5.5, 3, 0, 0, Math.PI * 2); g.fill();
+    // short dark hair under a red cap, with a brim toward facing direction
+    g.fillStyle = "#3a2412";
+    g.beginPath(); g.ellipse(x - f * 4, hy + 2, 3.5, 3, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#d32f2f";
+    g.beginPath(); g.arc(x, hy - 1, 10, Math.PI * 1.0, Math.PI * 2.0); g.closePath(); g.fill();
+    g.fillStyle = "#b71c1c";
+    g.beginPath(); g.ellipse(x + f * 5, hy - 2, 6.5, 2, 0, 0, Math.PI * 2); g.fill();
   } else {
-    g.beginPath(); g.ellipse(x + f * 1, hy - 6, 9, 4, 0, 0, Math.PI * 2); g.fill();
+    // girl: hair cap, bangs and a pink bow
+    g.fillStyle = "#7a3e1d";
+    g.beginPath(); g.arc(x, hy, 10, Math.PI * 1.02, Math.PI * 1.98); g.closePath(); g.fill();
+    g.beginPath(); g.ellipse(x + f, hy - 6, 9, 4, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ff6fa8";
+    circ(g, x - f * 8, hy - 7, 2.6);
   }
 
   // eyes (blink now and then), looking toward facing direction
   const blink = (t % 3.2) < 0.12;
   const ox = f * 1.2;
+  g.fillStyle = "#1e1e1e";
   if (blink) {
-    g.fillStyle = "#1e1e1e";
     g.fillRect(x - 4.2 + ox, hy + 0.5, 2.4, 0.8);
     g.fillRect(x + 1.8 + ox, hy + 0.5, 2.4, 0.8);
   } else {
-    g.fillStyle = "#1e1e1e";
     circ(g, x - 3 + ox, hy + 1, 1.5);
     circ(g, x + 3 + ox, hy + 1, 1.5);
     g.fillStyle = "#ffffff";
@@ -458,9 +465,15 @@ if (!configured) {
   const g = canvas.getContext("2d");
   const bgCanvas = buildBackground();
 
-  let me = null;          // my character (local, smooth)
-  let players = {};       // raw data from Firebase
-  const remote = {};      // other players, interpolated
+  let me = null;            // my character (null while on the selection screen)
+  let players = {};         // raw data from Firebase
+  const remote = {};        // other players, interpolated
+  const seenA = {};         // role -> { a, at }: when we last saw that player's activity change
+  let joining = false;
+  let loopStarted = false;
+  let statusMsg = "";
+  let lastSent = 0, lastKey = "";
+  let t = 0, lastFrame = performance.now();
 
   // ----- Input: keyboard -----
   const keysDown = new Set();
@@ -488,7 +501,8 @@ if (!configured) {
     if (d > max) { dx = dx / d * max; dy = dy / d * max; }
     knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     const mag = Math.min(1, Math.hypot(dx, dy) / max);
-    joy = mag < 0.15 ? { x: 0, y: 0 } : { x: (dx / Math.hypot(dx, dy)) * mag, y: (dy / Math.hypot(dx, dy)) * mag };
+    const len = Math.hypot(dx, dy) || 1;
+    joy = mag < 0.15 ? { x: 0, y: 0 } : { x: (dx / len) * mag, y: (dy / len) * mag };
   }
   joyEl.addEventListener("pointerdown", e => {
     if (!me) return;
@@ -512,25 +526,46 @@ if (!configured) {
     return joy;
   }
 
+  // ----- Availability -----
+  function isStale(role) {
+    const s = seenA[role];
+    return !s || Date.now() - s.at > IDLE_MS;
+  }
+  function isAlive(role) {
+    return !!players[role] && !isStale(role);
+  }
+
   // ----- Real-time sync -----
   playersRef.on("value", snap => {
     const data = snap.val() || {};
+    const now = Date.now();
     players = data;
-    for (const role of Object.keys(remote)) {
-      if (!data[role]) delete remote[role];
-    }
     for (const role of Object.keys(data)) {
-      if (me && role === me.role) continue;
       const p = data[role];
-      if (!remote[role]) remote[role] = { x: p.x, y: p.y };
-      Object.assign(remote[role], {
-        role, tx: p.x, ty: p.y, f: p.f || 1, m: !!p.m, name: p.name
-      });
+      // Record the time we last saw this player's activity marker change
+      if (!seenA[role] || seenA[role].a !== p.a) seenA[role] = { a: p.a, at: now };
     }
+    for (const role of Object.keys(seenA)) {
+      if (!data[role]) delete seenA[role];
+    }
+    syncRemote();
     updateInfo();
+    refreshButtons();
   });
 
-  let lastSent = 0, lastKey = "";
+  function syncRemote() {
+    for (const role of Object.keys(remote)) {
+      if (!isAlive(role) || (me && role === me.role)) delete remote[role];
+    }
+    for (const role of Object.keys(players)) {
+      if (me && role === me.role) continue;
+      if (!isAlive(role)) continue;
+      const p = players[role];
+      if (!remote[role]) remote[role] = { x: p.x, y: p.y };
+      Object.assign(remote[role], { role, tx: p.x, ty: p.y, f: p.f || 1, m: !!p.m, name: p.name });
+    }
+  }
+
   function sendState(now) {
     const key = `${me.x.toFixed(1)}|${me.y.toFixed(1)}|${me.f}|${me.m}`;
     if (key === lastKey) return;
@@ -538,44 +573,94 @@ if (!configured) {
     lastKey = key;
     lastSent = now;
     playersRef.child(me.role).update({
-      x: +me.x.toFixed(1), y: +me.y.toFixed(1), f: me.f, m: me.m
+      x: +me.x.toFixed(1), y: +me.y.toFixed(1), f: me.f, m: me.m, a: Date.now()
     });
+  }
+
+  // ----- Selection screen -----
+  function refreshButtons() {
+    if (me || joining) return;
+    buttons.forEach(b => { b.disabled = isAlive(b.dataset.role); });
+    statusEl.textContent = statusMsg || "Karakter se\u00E7in";
+  }
+
+  // Housekeeping every second: remove idle players, refresh availability
+  setInterval(() => {
+    const now = Date.now();
+    for (const role of Object.keys(players)) {
+      if (me && role === me.role) continue;
+      if (isStale(role)) playersRef.child(role).remove();
+    }
+    if (me && now - me.lastAct > IDLE_MS) {
+      kickSelf("20 saniy\u0259 h\u0259r\u0259k\u0259t olmad\u0131\u011F\u0131 \u00FC\u00E7\u00FCn oyundan \u00E7\u0131xar\u0131ld\u0131n.");
+    }
+    syncRemote();
+    refreshButtons();
+  }, 1000);
+
+  function kickSelf(msg) {
+    if (!me) return;
+    const role = me.role;
+    playersRef.child(role).onDisconnect().cancel();
+    playersRef.child(role).remove();
+    me = null;
+    lastKey = "";
+    remote && Object.keys(remote).forEach(k => delete remote[k]);
+    statusMsg = msg;
+    gameEl.style.display = "none";
+    selectEl.style.display = "flex";
+    refreshButtons();
   }
 
   // ----- Joining -----
   buttons.forEach(btn => btn.addEventListener("click", () => joinAs(btn.dataset.role)));
 
   async function joinAs(role) {
+    if (isAlive(role)) {
+      statusMsg = "Bu karakter art\u0131q tutulub. Dig\u0259rini se\u00E7in.";
+      statusEl.textContent = statusMsg;
+      return;
+    }
+    joining = true;
     buttons.forEach(b => b.disabled = true);
-    statusEl.textContent = "Qo\u015Fulur...";
+    statusMsg = "Qo\u015Fulur...";
+    statusEl.textContent = statusMsg;
 
     const slotRef = playersRef.child(role);
     const start = CHARS[role].start;
     const result = await slotRef.transaction(current => {
-      if (current) return;
-      return { name: CHARS[role].name, x: start.x, y: start.y, f: 1, m: false };
+      if (current) return; // already taken in the database
+      return { name: CHARS[role].name, x: start.x, y: start.y, f: 1, m: false, a: Date.now() };
     });
+    joining = false;
 
     if (!result.committed) {
-      statusEl.textContent = "Bu karakter art\u0131q tutulub. Dig\u0259rini se\u00E7in.";
-      buttons.forEach(b => { if (b.dataset.role !== role) b.disabled = false; });
+      statusMsg = "Bu karakter art\u0131q tutulub. Dig\u0259rini se\u00E7in.";
+      refreshButtons();
       return;
     }
 
-    me = { role, x: start.x, y: start.y, f: 1, m: false };
+    me = { role, x: start.x, y: start.y, f: 1, m: false, lastAct: Date.now() };
+    lastKey = "";
+    statusMsg = "";
     slotRef.onDisconnect().remove();
 
     selectEl.style.display = "none";
     gameEl.style.display = "flex";
     resizeCanvas();
+    syncRemote();
     updateInfo();
-    requestAnimationFrame(loop);
+    if (!loopStarted) {
+      loopStarted = true;
+      lastFrame = performance.now();
+      requestAnimationFrame(loop);
+    }
   }
 
   function updateInfo() {
     if (!me) return;
     const other = me.role === "boy" ? "girl" : "boy";
-    const waiting = !players[other];
+    const waiting = !isAlive(other);
     infoEl.textContent = `S\u0259n: ${CHARS[me.role].name}` +
       (waiting ? " \u2014 dig\u0259r oyun\u00E7u g\u00F6zl\u0259nilir..." : "");
   }
@@ -590,9 +675,6 @@ if (!configured) {
   window.addEventListener("resize", resizeCanvas);
 
   // ----- Game loop -----
-  let t = 0;
-  let lastFrame = performance.now();
-
   function loop(now) {
     const dt = Math.min(0.05, (now - lastFrame) / 1000);
     lastFrame = now;
@@ -602,6 +684,7 @@ if (!configured) {
       const d = inputVec();
       me.m = !!(d.x || d.y);
       if (me.m) {
+        me.lastAct = Date.now();
         const nx = me.x + d.x * SPEED * dt;
         const ny = me.y + d.y * SPEED * dt;
         if (!blocked(nx, me.y)) me.x = nx;
@@ -618,7 +701,7 @@ if (!configured) {
       r.y += (r.ty - r.y) * a;
     }
 
-    render(t);
+    if (me) render(t);
     requestAnimationFrame(loop);
   }
 
@@ -633,8 +716,8 @@ if (!configured) {
 
     const s = cw / VW;                 // css px per world unit
     const vh = ch / s;                 // visible height in world units
-    const camX = clamp((me ? me.x : W / 2) - VW / 2, 0, W - VW);
-    const camY = clamp((me ? me.y : H / 2) - vh / 2, 0, H - vh);
+    const camX = clamp(me.x - VW / 2, 0, W - VW);
+    const camY = clamp(me.y - vh / 2, 0, H - vh);
 
     g.setTransform(dpr * s, 0, 0, dpr * s, -camX * dpr * s, -camY * dpr * s);
     g.fillStyle = "#6fae3c";
@@ -642,8 +725,7 @@ if (!configured) {
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWaterfall(g, time);
 
-    const list = [];
-    if (me) list.push({ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" });
+    const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
     for (const k in remote) {
       const r = remote[k];
       list.push({ role: k, x: r.x, y: r.y, f: r.f, m: r.m, label: r.name });
