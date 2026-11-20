@@ -61,7 +61,7 @@
     color: #fff; padding: 1px 4px; border-radius: 4px; white-space: nowrap;
   }
 
-  /* Joystick: yalnÄ±z toxunuÅŸlu ekranlarda (telefon) gÃ¶rÃ¼nÃ¼r */
+  /* Joystick: visible only on touch screens */
   #joy {
     display: none;
     position: relative;
@@ -94,15 +94,15 @@
 <body>
 
 <div id="select">
-  <h1>Karakterini seÃ§</h1>
-  <button class="choice" id="btn-boy" data-role="boy">ğŸ‘¦ OÄŸlan</button>
-  <button class="choice" id="btn-girl" data-role="girl">ğŸ‘§ QÄ±z</button>
-  <div id="status">YÃ¼klÉ™nir...</div>
+  <h1>Karakterini se&ccedil;</h1>
+  <button class="choice" id="btn-boy" data-role="boy">&#x1F466; O&#287;lan</button>
+  <button class="choice" id="btn-girl" data-role="girl">&#x1F467; Q&#305;z</button>
+  <div id="status">Y&#252;kl&#601;nir...</div>
 </div>
 
 <div id="game">
   <div id="info"></div>
-  <div id="hint">HÉ™rÉ™kÉ™t: W A S D vÉ™ ya ox dÃ¼ymÉ™lÉ™ri</div>
+  <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri</div>
   <div id="map"></div>
   <div id="joy"><div id="knob"></div></div>
 </div>
@@ -112,9 +112,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-/* ============================================================
-   Firebase konfiqurasiyasÄ±
-   ============================================================ */
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCWli-LygY7f2KoPgCVpWpb2PsnlLWNFwM",
   authDomain: "wevillage-1102.firebaseapp.com",
@@ -124,14 +122,13 @@ const firebaseConfig = {
   messagingSenderId: "790485485366",
   appId: "1:790485485366:web:8b4ead34a2208620601597"
 };
-/* ============================================================ */
 
 const SIZE = 10;
 const ROOM = "main";
-const STEP_MS = 170; // hÉ™rÉ™kÉ™t sÃ¼rÉ™ti (kiÃ§ik = sÃ¼rÉ™tli)
+const STEP_MS = 170; // movement speed (lower = faster)
 const CHARS = {
-  boy:  { emoji: "ğŸ‘¦", name: "OÄŸlan", start: { x: 1, y: 1 } },
-  girl: { emoji: "ğŸ‘§", name: "QÄ±z",  start: { x: 8, y: 8 } }
+  boy:  { emoji: "\u{1F466}", name: "O\u011Flan", start: { x: 1, y: 1 } },
+  girl: { emoji: "\u{1F467}", name: "Q\u0131z",   start: { x: 8, y: 8 } }
 };
 
 const statusEl = document.getElementById("status");
@@ -146,7 +143,7 @@ const buttons  = document.querySelectorAll(".choice");
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
 if (!configured) {
-  statusEl.textContent = "Firebase konfiqurasiyasÄ± doldurulmayÄ±b.";
+  statusEl.textContent = "Firebase konfigurasiyas\u0131 doldurulmay\u0131b.";
   buttons.forEach(b => b.disabled = true);
 } else {
   firebase.initializeApp(firebaseConfig);
@@ -158,14 +155,14 @@ if (!configured) {
   let players = {};
   const playerEls = {};
 
-  // XÉ™ritÉ™ xanalarÄ± (yalnÄ±z vizual)
+  // Map tiles (visual only)
   for (let i = 0; i < SIZE * SIZE; i++) {
     const tile = document.createElement("div");
     tile.className = "tile";
     mapEl.appendChild(tile);
   }
 
-  // ---------- HÉ™rÉ™kÉ™t nÉ™zarÉ™ti ----------
+  // ---------- Movement control ----------
   let timer = null;
   let joyDir = { dx: 0, dy: 0 };
   const heldKeys = [];
@@ -210,7 +207,7 @@ if (!configured) {
     timer = null;
   }
 
-  // KompÃ¼ter: klaviatura
+  // Computer: keyboard
   document.addEventListener("keydown", e => {
     const k = e.key.toLowerCase();
     if (!KEYS[k]) return;
@@ -227,7 +224,7 @@ if (!configured) {
     if (i !== -1) heldKeys.splice(i, 1);
   });
 
-  // Telefon: joystick
+  // Phone: joystick
   function setJoyFromEvent(e) {
     const r = joyEl.getBoundingClientRect();
     const cx = r.left + r.width / 2;
@@ -271,18 +268,18 @@ if (!configured) {
   joyEl.addEventListener("pointerup", releaseJoy);
   joyEl.addEventListener("pointercancel", releaseJoy);
 
-  // ---------- QoÅŸulma ----------
+  // ---------- Joining ----------
   buttons.forEach(btn => {
     btn.addEventListener("click", () => joinAs(btn.dataset.role));
   });
 
   async function joinAs(role) {
     buttons.forEach(b => b.disabled = true);
-    statusEl.textContent = "QoÅŸulur...";
+    statusEl.textContent = "Qo\u015Fulur...";
 
     const slotRef = playersRef.child(role);
     const result = await slotRef.transaction(current => {
-      if (current) return; // artÄ±q tutulub
+      if (current) return; // already taken
       return {
         name: CHARS[role].name,
         emoji: CHARS[role].emoji,
@@ -292,7 +289,7 @@ if (!configured) {
     });
 
     if (!result.committed) {
-      statusEl.textContent = "Bu karakter artÄ±q tutulub. DigÉ™rini seÃ§in.";
+      statusEl.textContent = "Bu karakter art\u0131q tutulub. Dig\u0259rini se\u00E7in.";
       buttons.forEach(b => {
         if (b.dataset.role !== role) b.disabled = false;
       });
@@ -313,11 +310,11 @@ if (!configured) {
     const other = myRole === "boy" ? "girl" : "boy";
     const waiting = !players[other];
     infoEl.textContent =
-      `SÉ™n: ${CHARS[myRole].emoji} ${CHARS[myRole].name}` +
-      (waiting ? " â€” digÉ™r oyunÃ§u gÃ¶zlÉ™nilir..." : "");
+      `S\u0259n: ${CHARS[myRole].emoji} ${CHARS[myRole].name}` +
+      (waiting ? " \u2014 dig\u0259r oyun\u00E7u g\u00F6zl\u0259nilir..." : "");
   }
 
-  // ---------- Real-time sinxronizasiya ----------
+  // ---------- Real-time sync ----------
   playersRef.on("value", snap => {
     players = snap.val() || {};
     render();
@@ -336,11 +333,12 @@ if (!configured) {
       if (!el) {
         el = document.createElement("div");
         el.className = "player";
-        el.innerHTML = `<span>${p.emoji}</span><span class="tag"></span>`;
+        el.innerHTML = `<span></span><span class="tag"></span>`;
         mapEl.appendChild(el);
         playerEls[role] = el;
       }
-      el.querySelector(".tag").textContent = role === myRole ? "SÉ™n" : p.name;
+      el.querySelector("span").textContent = p.emoji;
+      el.querySelector(".tag").textContent = role === myRole ? "S\u0259n" : p.name;
       el.style.left = `${p.x * 10}%`;
       el.style.top  = `${p.y * 10}%`;
     });
