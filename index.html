@@ -16,6 +16,7 @@
     justify-content: center;
     padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
     user-select: none;
+    touch-action: manipulation;
   }
   #select {
     display: flex; flex-direction: column; gap: 14px; align-items: center;
@@ -32,6 +33,7 @@
 
   #game { display: none; flex-direction: column; align-items: center; gap: 8px; }
   #info { color: #fff; font-weight: bold; text-shadow: 0 1px 3px #000; text-align: center; min-height: 1.2em; }
+  #hint { color: #fff; font-size: .85rem; text-shadow: 0 1px 3px #000; text-align: center; }
   #map {
     position: relative;
     display: grid;
@@ -43,15 +45,14 @@
     overflow: hidden;
     background: #7cb342;
   }
-  .tile { background: #8bc34a; border: 1px solid #689f38; cursor: pointer; }
-  .tile:active { filter: brightness(1.1); }
+  .tile { background: #8bc34a; border: 1px solid #689f38; }
   .player {
     position: absolute;
     width: 10%;
     height: 10%;
     display: flex; align-items: center; justify-content: center;
     font-size: clamp(16px, 4.5vw, 26px);
-    transition: left .25s ease, top .25s ease;
+    transition: left .15s linear, top .15s linear;
     pointer-events: none;
     z-index: 2;
   }
@@ -59,20 +60,51 @@
     position: absolute; top: -14px; font-size: 10px; background: rgba(0,0,0,.6);
     color: #fff; padding: 1px 4px; border-radius: 4px; white-space: nowrap;
   }
+
+  /* Joystick: yalnÄ±z toxunuÅŸlu ekranlarda (telefon) gÃ¶rÃ¼nÃ¼r */
+  #joy {
+    display: none;
+    position: relative;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.35);
+    border: 3px solid rgba(0,0,0,.25);
+    touch-action: none;
+    margin-top: 6px;
+  }
+  @media (pointer: coarse) {
+    #joy { display: block; }
+    #hint { display: none; }
+  }
+  #knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    border: 2px solid rgba(0,0,0,.2);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
 
 <div id="select">
-  <h1>Karakterini seç</h1>
-  <button class="choice" id="btn-boy" data-role="boy">👦 Oğlan</button>
-  <button class="choice" id="btn-girl" data-role="girl">👧 Qız</button>
-  <div id="status">Yüklənir...</div>
+  <h1>Karakterini seÃ§</h1>
+  <button class="choice" id="btn-boy" data-role="boy">ğŸ‘¦ OÄŸlan</button>
+  <button class="choice" id="btn-girl" data-role="girl">ğŸ‘§ QÄ±z</button>
+  <div id="status">YÃ¼klÉ™nir...</div>
 </div>
 
 <div id="game">
   <div id="info"></div>
+  <div id="hint">HÉ™rÉ™kÉ™t: W A S D vÉ™ ya ox dÃ¼ymÉ™lÉ™ri</div>
   <div id="map"></div>
+  <div id="joy"><div id="knob"></div></div>
 </div>
 
 <!-- Firebase (compat) -->
@@ -81,7 +113,7 @@
 
 <script>
 /* ============================================================
-   1) BURANI DOLDURUN: Firebase konfiqurasiyası
+   Firebase konfiqurasiyasÄ±
    ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyCWli-LygY7f2KoPgCVpWpb2PsnlLWNFwM",
@@ -92,14 +124,14 @@ const firebaseConfig = {
   messagingSenderId: "790485485366",
   appId: "1:790485485366:web:8b4ead34a2208620601597"
 };
-
 /* ============================================================ */
 
 const SIZE = 10;
 const ROOM = "main";
+const STEP_MS = 170; // hÉ™rÉ™kÉ™t sÃ¼rÉ™ti (kiÃ§ik = sÃ¼rÉ™tli)
 const CHARS = {
-  boy:  { emoji: "👦", name: "Oğlan", start: { x: 1, y: 1 } },
-  girl: { emoji: "👧", name: "Qız",  start: { x: 8, y: 8 } }
+  boy:  { emoji: "ğŸ‘¦", name: "OÄŸlan", start: { x: 1, y: 1 } },
+  girl: { emoji: "ğŸ‘§", name: "QÄ±z",  start: { x: 8, y: 8 } }
 };
 
 const statusEl = document.getElementById("status");
@@ -107,12 +139,14 @@ const selectEl = document.getElementById("select");
 const gameEl   = document.getElementById("game");
 const infoEl   = document.getElementById("info");
 const mapEl    = document.getElementById("map");
+const joyEl    = document.getElementById("joy");
+const knobEl   = document.getElementById("knob");
 const buttons  = document.querySelectorAll(".choice");
 
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
 if (!configured) {
-  statusEl.textContent = "Firebase konfiqurasiyası doldurulmayıb (index.html-də firebaseConfig).";
+  statusEl.textContent = "Firebase konfiqurasiyasÄ± doldurulmayÄ±b.";
   buttons.forEach(b => b.disabled = true);
 } else {
   firebase.initializeApp(firebaseConfig);
@@ -120,31 +154,135 @@ if (!configured) {
   const playersRef = db.ref(`rooms/${ROOM}/players`);
 
   let myRole = null;
+  let myPos = { x: 0, y: 0 };
   let players = {};
   const playerEls = {};
 
-  // Xəritə xanaları
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      const tile = document.createElement("div");
-      tile.className = "tile";
-      tile.addEventListener("click", () => moveTo(x, y));
-      mapEl.appendChild(tile);
+  // XÉ™ritÉ™ xanalarÄ± (yalnÄ±z vizual)
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    mapEl.appendChild(tile);
+  }
+
+  // ---------- HÉ™rÉ™kÉ™t nÉ™zarÉ™ti ----------
+  let timer = null;
+  let joyDir = { dx: 0, dy: 0 };
+  const heldKeys = [];
+  const KEYS = {
+    w: [0, -1], arrowup: [0, -1],
+    s: [0, 1],  arrowdown: [0, 1],
+    a: [-1, 0], arrowleft: [-1, 0],
+    d: [1, 0],  arrowright: [1, 0]
+  };
+
+  function currentDir() {
+    if (heldKeys.length) {
+      const [dx, dy] = KEYS[heldKeys[heldKeys.length - 1]];
+      return { dx, dy };
+    }
+    return joyDir;
+  }
+
+  function move(dx, dy) {
+    if (!myRole) return;
+    const nx = Math.min(SIZE - 1, Math.max(0, myPos.x + dx));
+    const ny = Math.min(SIZE - 1, Math.max(0, myPos.y + dy));
+    if (nx === myPos.x && ny === myPos.y) return;
+    myPos = { x: nx, y: ny };
+    playersRef.child(myRole).update({ x: nx, y: ny });
+  }
+
+  function tick() {
+    const d = currentDir();
+    if (!d.dx && !d.dy) { stopMoving(); return; }
+    move(d.dx, d.dy);
+  }
+
+  function startMoving() {
+    if (timer) return;
+    tick();
+    timer = setInterval(tick, STEP_MS);
+  }
+
+  function stopMoving() {
+    clearInterval(timer);
+    timer = null;
+  }
+
+  // KompÃ¼ter: klaviatura
+  document.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (!KEYS[k]) return;
+    e.preventDefault();
+    if (!heldKeys.includes(k)) {
+      heldKeys.push(k);
+      startMoving();
+    }
+  });
+
+  document.addEventListener("keyup", e => {
+    const k = e.key.toLowerCase();
+    const i = heldKeys.indexOf(k);
+    if (i !== -1) heldKeys.splice(i, 1);
+  });
+
+  // Telefon: joystick
+  function setJoyFromEvent(e) {
+    const r = joyEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    const max = r.width / 2 - 28;
+    if (dist > max) {
+      dx = (dx / dist) * max;
+      dy = (dy / dist) * max;
+    }
+    knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+    const deadZone = 18;
+    if (dist < deadZone) {
+      joyDir = { dx: 0, dy: 0 };
+    } else if (Math.abs(dx) > Math.abs(dy)) {
+      joyDir = { dx: Math.sign(dx), dy: 0 };
+    } else {
+      joyDir = { dx: 0, dy: Math.sign(dy) };
     }
   }
 
-  // Oyunçu seçimi
+  joyEl.addEventListener("pointerdown", e => {
+    if (!myRole) return;
+    joyEl.setPointerCapture(e.pointerId);
+    setJoyFromEvent(e);
+    startMoving();
+  });
+
+  joyEl.addEventListener("pointermove", e => {
+    if (!joyEl.hasPointerCapture(e.pointerId)) return;
+    setJoyFromEvent(e);
+  });
+
+  function releaseJoy() {
+    joyDir = { dx: 0, dy: 0 };
+    knobEl.style.transform = "translate(-50%, -50%)";
+  }
+  joyEl.addEventListener("pointerup", releaseJoy);
+  joyEl.addEventListener("pointercancel", releaseJoy);
+
+  // ---------- QoÅŸulma ----------
   buttons.forEach(btn => {
     btn.addEventListener("click", () => joinAs(btn.dataset.role));
   });
 
   async function joinAs(role) {
     buttons.forEach(b => b.disabled = true);
-    statusEl.textContent = "Qoşulur...";
+    statusEl.textContent = "QoÅŸulur...";
 
     const slotRef = playersRef.child(role);
     const result = await slotRef.transaction(current => {
-      if (current) return; // artıq tutulub, abort
+      if (current) return; // artÄ±q tutulub
       return {
         name: CHARS[role].name,
         emoji: CHARS[role].emoji,
@@ -154,7 +292,7 @@ if (!configured) {
     });
 
     if (!result.committed) {
-      statusEl.textContent = "Bu karakter artıq tutulub. Digərini seçin.";
+      statusEl.textContent = "Bu karakter artÄ±q tutulub. DigÉ™rini seÃ§in.";
       buttons.forEach(b => {
         if (b.dataset.role !== role) b.disabled = false;
       });
@@ -162,7 +300,8 @@ if (!configured) {
     }
 
     myRole = role;
-    slotRef.onDisconnect().remove(); // telefon bağlananda yer azad olsun
+    myPos = { x: CHARS[role].start.x, y: CHARS[role].start.y };
+    slotRef.onDisconnect().remove();
 
     selectEl.style.display = "none";
     gameEl.style.display = "flex";
@@ -174,23 +313,17 @@ if (!configured) {
     const other = myRole === "boy" ? "girl" : "boy";
     const waiting = !players[other];
     infoEl.textContent =
-      `Sən: ${CHARS[myRole].emoji} ${CHARS[myRole].name}` +
-      (waiting ? " — digər oyunçu gözlənilir..." : "");
+      `SÉ™n: ${CHARS[myRole].emoji} ${CHARS[myRole].name}` +
+      (waiting ? " â€” digÉ™r oyunÃ§u gÃ¶zlÉ™nilir..." : "");
   }
 
-  function moveTo(x, y) {
-    if (!myRole) return;
-    playersRef.child(myRole).update({ x, y });
-  }
-
-  // Bütün oyunçuları real-time izləyirik
+  // ---------- Real-time sinxronizasiya ----------
   playersRef.on("value", snap => {
     players = snap.val() || {};
     render();
   });
 
   function render() {
-    // Köhnə və ya çıxmış oyunçuları təmizlə
     Object.keys(playerEls).forEach(role => {
       if (!players[role]) {
         playerEls[role].remove();
@@ -198,7 +331,6 @@ if (!configured) {
       }
     });
 
-    // Mövcud oyunçuları yerləşdir
     Object.entries(players).forEach(([role, p]) => {
       let el = playerEls[role];
       if (!el) {
@@ -208,7 +340,7 @@ if (!configured) {
         mapEl.appendChild(el);
         playerEls[role] = el;
       }
-      el.querySelector(".tag").textContent = role === myRole ? "Sən" : p.name;
+      el.querySelector(".tag").textContent = role === myRole ? "SÉ™n" : p.name;
       el.style.left = `${p.x * 10}%`;
       el.style.top  = `${p.y * 10}%`;
     });
