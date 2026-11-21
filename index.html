@@ -43,6 +43,7 @@
   }
   #info { flex: 1; min-height: 1.2em; }
   #topbar .right { display: flex; align-items: center; gap: 8px; }
+  #clock { background: rgba(255,255,255,.22); border-radius: 10px; padding: 3px 8px; font-size: .8rem; }
   #hint { color: #fff; font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.6); text-align: center; }
   #world {
     display: block;
@@ -57,20 +58,20 @@
     transition: opacity .3s ease;
   }
 
-  #hotbar { display: flex; gap: 8px; justify-content: center; width: 100%; }
+  #hotbar { display: flex; gap: 6px; justify-content: center; width: 100%; }
   .slot {
-    width: 64px; height: 50px;
+    width: 58px; height: 50px;
     background: linear-gradient(#fffdf7, #f3ead8);
     border: 2px solid #a1887f; border-radius: 14px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: .72rem; color: #4e342e; cursor: pointer;
+    font-size: .7rem; color: #4e342e; cursor: pointer;
     box-shadow: 0 3px 0 rgba(0,0,0,.18);
     transition: transform .12s ease;
   }
   .slot:active { transform: scale(.96); }
   .slot.sel { border-color: #ffd54f; box-shadow: 0 0 0 3px rgba(255,213,79,.55), 0 3px 0 rgba(0,0,0,.18); }
   .slot.off { opacity: .45; }
-  .slot b { font-size: .85rem; }
+  .slot b { font-size: .8rem; }
 
   .btn {
     border: none; border-radius: 12px; background: linear-gradient(#6cc070, #4caf50); color: #fff;
@@ -145,11 +146,6 @@
     width: 44px; height: 44px; border-radius: 12px; border: 2px solid #8d6e63; flex-shrink: 0;
     background: #8d6a46;
   }
-  .icon.seed {
-    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-    background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #bcaaa4 34% 100%);
-    border: 2px solid #a1887f;
-  }
   .icon.rod {
     width: 44px; height: 44px; flex-shrink: 0;
     background: linear-gradient(135deg, transparent 46%, #6d4c41 47% 52%, transparent 53%);
@@ -160,6 +156,7 @@
   #barFill { height: 100%; width: 0%; background: linear-gradient(#ffcc80, #ef6c00); transition: width .4s ease; }
   #barText { font-size: .85rem; text-align: center; }
   #fishList { font-size: .85rem; text-align: center; color: #6d4c41; }
+  #seedInfo { font-size: .8rem; text-align: center; color: #8d6e63; }
 </style>
 </head>
 <body>
@@ -175,11 +172,12 @@
   <div id="topbar">
     <div id="info"></div>
     <div class="right">
+      <span id="clock"></span>
       <span id="coins"></span>
       <button class="btn small" id="openShop">Ma&#287;aza</button>
     </div>
   </div>
-  <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri. Yolda g&#246;zl&#601;y&#601;n m&#252;&#351;t&#601;riy&#601; toxunub sifari&#351;i yerin&#601; yetirin.</div>
+  <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri. Toxumlar ambardan gəlir. Yolda g&#246;zl&#601;y&#601;n m&#252;&#351;t&#601;riy&#601; toxunub sifari&#351;i yerin&#601; yetirin.</div>
   <canvas id="world"></canvas>
   <div id="bottom">
     <div id="toast"></div>
@@ -187,10 +185,10 @@
   </div>
   <div id="hotbar">
     <div class="slot off" data-i="0" id="slot0"><b>Tilov</b><span id="slot0c">yoxdur</span></div>
-    <div class="slot" data-i="1" id="slot1"><b>Toxum</b><span id="slot1c">0</span></div>
+    <div class="slot" data-i="1" id="slot1"><b>Bu&#287;da</b><span id="slot1c">0</span></div>
     <div class="slot" data-i="2" id="slot2"><b>Bal&#305;q</b><span id="slot2c">0</span></div>
-    <div class="slot off" data-i="3"><b>&mdash;</b><span>bo&#351;</span></div>
-    <div class="slot off" data-i="4"><b>&mdash;</b><span>bo&#351;</span></div>
+    <div class="slot off" data-i="3" id="slot3"><b>Qar&#287;&#305;dal&#305;</b><span id="slot3c">0</span></div>
+    <div class="slot off" data-i="4" id="slot4"><b>G&#252;n&#601;baxan</b><span id="slot4c">0</span></div>
   </div>
   <div id="joy"><div id="knob"></div></div>
 </div>
@@ -214,15 +212,6 @@
     </div>
 
     <div class="row">
-      <div class="icon seed"></div>
-      <div class="grow">
-        <b>Bu&#287;da toxumu</b><br>
-        <small>10 pul &middot; siz&#601;: <span id="seedCount">0</span></small>
-      </div>
-      <button class="btn" id="buy-seed">Al</button>
-    </div>
-
-    <div class="row">
       <div class="icon rod"></div>
       <div class="grow">
         <b>Tilov</b><br>
@@ -231,6 +220,7 @@
       <button class="btn" id="buy-rod">Al</button>
     </div>
 
+    <div id="seedInfo"></div>
     <div id="fishList"></div>
   </div>
 </div>
@@ -245,13 +235,7 @@
     <img class="barnPrev" id="barnPreview" src="textures/barn.png" alt="">
     <div class="bar"><div id="barFill"></div></div>
     <div id="barText"></div>
-    <div class="row">
-      <div class="icon seed"></div>
-      <div class="grow">
-        <b>Bu&#287;da</b><br>
-        <small>Ambarda: <span id="barWheat">0</span></small>
-      </div>
-    </div>
+    <div id="barList"></div>
   </div>
 </div>
 
@@ -276,25 +260,34 @@ const ROOM_ID = "main";
 const W = 1600, H = 1000;
 const VW = 480;
 const SPEED = 150;
-const ACCEL = 9;                 // how quickly movement eases in/out (softer feel)
-const CAM_EASE = 6;              // camera follow smoothness
+const ACCEL = 9;
+const CAM_EASE = 6;
 const R = 12;
 const SEND_MS = 100;
 const IDLE_MS = 20000;
 const HEARTBEAT_MS = 5000;
 const CELL = 64;
 const SOIL = { price: 50, refund: 25 };
-const SEED_PRICE = 10;
 const ROD_PRICE = 40;
-const WHEAT_YIELD = 3;
-const WAREHOUSE_CAP = 40;
-const GROW_MS = 30000;
+const WAREHOUSE_CAP = 40;          // wheat + corn + sunflower (seeds are not counted)
+const START_SEEDS = { sWheat: 6, sCorn: 4, sSun: 4 };
 const START_COINS = 300;
 const BARN = { x: 470, y: 150, w: 150, h: 106 };
 
-// Customers walk along the dirt path from its start
-const CUST_SPEED = 80;           // path units per second
-const CUST_QUEUE_D = [560, 610, 660];   // path distance of each waiting spot
+// Crops. "seed" is the seed key in the store (taken on planting, one returned on harvest)
+const CROPS = {
+  wheat:     { name: "Bu\u011Fda",      grow: 30000, yield: 3, seed: "sWheat" },
+  corn:      { name: "Qar\u011F\u0131dal\u0131", grow: 45000, yield: 2, seed: "sCorn" },
+  sunflower: { name: "G\u00FCn\u0259baxan", grow: 40000, yield: 2, seed: "sSun" }
+};
+const SEED_OF_SLOT = { wheat: "wheat", corn: "corn", sunflower: "sunflower" };
+
+// Day / night
+const DAY_CYCLE_MS = 4 * 60 * 1000;
+
+// Customers
+const CUST_SPEED = 80;
+const CUST_QUEUE_D = [560, 610, 660];
 const CUST_PATIENCE = 70000;
 const CUST_MAX = 3;
 const CUST_SPAWN_EVERY = 20000;
@@ -317,7 +310,6 @@ const FISH = {
 
 const PATH = [[300, 1000], [420, 760], [700, 640], [900, 560], [1150, 600], [1400, 780], [1600, 800]];
 
-// Path helpers: cumulative length, position and direction by distance
 const PATH_SEG = [];
 let PATH_TOTAL = 0;
 for (let i = 0; i < PATH.length - 1; i++) {
@@ -332,11 +324,17 @@ function pathAt(d) {
   for (const seg of PATH_SEG) { if (d <= seg.start + seg.len) { s = seg; break; } }
   const k = s.len ? (d - s.start) / s.len : 0;
   const dx = (s.bx - s.ax) / (s.len || 1);
-  const dy = (s.by - s.ay) / (s.len || 1);
   return { x: lerp(s.ax, s.bx, k), y: lerp(s.ay, s.by, k), dir: dx >= 0 ? 1 : -1 };
 }
 const PATH_PTS = [];
 for (let d = 0; d <= PATH_TOTAL; d += 20) { const p = pathAt(d); PATH_PTS.push([p.x, p.y]); }
+
+const LAMPS = [];
+for (let d = 120; d < PATH_TOTAL; d += 150) {
+  const p = pathAt(d);
+  if (p.x > 1120 && p.x < 1420 && p.y > 700) continue;
+  LAMPS.push({ x: p.x + 26, y: p.y - 22 });
+}
 
 function rng(seed) {
   let s = seed;
@@ -352,6 +350,7 @@ function genTrees() {
     if (Math.hypot(x - 760, y - 460) < 170) continue;
     if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 55)) continue;
     if (x > BARN.x - 40 && x < BARN.x + BARN.w + 40 && y > BARN.y - 40 && y < BARN.y + BARN.h + 40) continue;
+    if (x > 1120 && y > 720 && y < 860) continue;
     list.push([x, y]);
   }
   return list;
@@ -393,6 +392,14 @@ function inLake(x, y) {
 function nearLake(x, y) {
   const a = (x - LAKE.cx) / (LAKE.rx + 70), b = (y - LAKE.cy) / (LAKE.ry + 70);
   return a * a + b * b < 1;
+}
+
+// Day phase: 0 = morning, 0.5 = midnight
+function dayPhase(now) {
+  return ((now % DAY_CYCLE_MS) + DAY_CYCLE_MS) % DAY_CYCLE_MS / DAY_CYCLE_MS;
+}
+function dayDarkness(now) {
+  return (1 - Math.cos(2 * Math.PI * dayPhase(now))) / 2;
 }
 
 // ---------- Textures (fallback drawn if a file is missing) ----------
@@ -469,7 +476,6 @@ function buildBackground() {
     g.stroke();
   }
 
-  // dirt path with soft edges
   strokeSmooth(g, PATH, 62, "rgba(120,80,40,.25)");
   strokeSmooth(g, PATH, 56, "#b98a58");
   strokeSmooth(g, PATH, 44, "#d2a870");
@@ -547,7 +553,6 @@ function drawWater(g, t) {
     g.lineTo(x, y0 + off + len);
     g.stroke();
   }
-
   for (let i = 0; i < 12; i++) {
     const k = (t * 1.2 + i / 12) % 1;
     const sx = FALL_BASE.x + (i - 6) * 2.8 * k;
@@ -605,8 +610,19 @@ function drawBarn(g) {
   g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
 }
 
-// Soil cells: raised tile with a soft pop-in when first placed
-function drawCellShadow(g, c, sc) {
+function drawLampPost(g, L) {
+  g.fillStyle = "rgba(0,0,0,.2)";
+  g.beginPath(); g.ellipse(L.x, L.y + 14, 5, 2.2, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#4e342e";
+  g.fillRect(L.x - 1.5, L.y - 8, 3, 22);
+  g.fillStyle = "#6d4c41";
+  rr(g, L.x - 5, L.y - 12, 10, 5, 2);
+  g.fillStyle = "#ffe082";
+  circ(g, L.x, L.y - 10, 2.6);
+}
+
+// Soil cells
+function drawCellShadow(g, c) {
   g.fillStyle = "rgba(0,0,0,.25)";
   g.fillRect(c.x + 3, c.y + 5, CELL, CELL);
 }
@@ -630,7 +646,7 @@ function drawCell(g, c, selected, now, sc) {
   g.fillStyle = "rgba(0,0,0,.32)";
   g.fillRect(x, y + s - 3, s, 3);
   g.fillRect(x + s - 3, y, 3, s);
-  if (c.crop) drawWheat(g, c, now);
+  if (c.crop) drawCrop(g, c, now);
   if (selected) {
     g.strokeStyle = "#ffeb3b";
     g.lineWidth = 3;
@@ -643,13 +659,17 @@ function drawCell(g, c, selected, now, sc) {
 
 function cropProgress(c, now) {
   if (!c.crop) return 0;
-  return clamp((now - c.crop.t) / GROW_MS, 0, 1);
+  const def = CROPS[c.crop.k] || CROPS.wheat;
+  return clamp((now - c.crop.t) / def.grow, 0, 1);
 }
 
-function drawWheat(g, c, now) {
+function drawCrop(g, c, now) {
   const p = cropProgress(c, now);
+  const kind = c.crop.k;
   const x = c.x, y = c.y, s = CELL;
-  if (p >= 1 && wheatReady) {
+  if (kind === "corn") drawCorn(g, x, y, s, p);
+  else if (kind === "sunflower") drawSunflower(g, x, y, s, p, now);
+  else if (p >= 1 && wheatReady) {
     g.drawImage(wheatImg, x, y, s, s);
   } else {
     const cols = 6;
@@ -677,10 +697,80 @@ function drawWheat(g, c, now) {
   g.fillRect(x + 4, y + s - 6, (s - 8) * p, 3);
 }
 
+function drawCorn(g, x, y, s, p) {
+  [0.22, 0.5, 0.78].forEach((fx, i) => {
+    const bx = x + s * fx;
+    const base = y + s - 8;
+    const h = 8 + easeOut(p) * 38;
+    g.strokeStyle = p < 1 ? "#558b2f" : "#7a8f2e";
+    g.lineWidth = 2.6;
+    g.lineCap = "round";
+    g.beginPath(); g.moveTo(bx, base); g.quadraticCurveTo(bx + (i - 1) * 2, base - h * 0.6, bx, base - h); g.stroke();
+    g.fillStyle = p < 1 ? "#7cb342" : "#9e9d24";
+    for (let k = 0; k < 3; k++) {
+      const ly = base - h * (0.35 + k * 0.2);
+      const side = k % 2 ? 1 : -1;
+      g.beginPath();
+      g.ellipse(bx + side * 5, ly, 6, 2.2, side * 0.5, 0, Math.PI * 2);
+      g.fill();
+    }
+    if (p > 0.55) {
+      const k = clamp((p - 0.55) / 0.45, 0, 1);
+      const cy = base - h * 0.62;
+      g.fillStyle = "#c6a700";
+      g.beginPath(); g.ellipse(bx + 4, cy, 3.2 * k + 0.5, 6 * k + 0.5, 0.3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffd600";
+      g.beginPath(); g.ellipse(bx + 4, cy, 2.4 * k + 0.4, 5 * k + 0.4, 0.3, 0, Math.PI * 2); g.fill();
+    }
+  });
+}
+
+// Sunflower: tall green stem, leaves, and a big yellow head that turns with the sun
+function drawSunflower(g, x, y, s, p, now) {
+  const cx = x + s * 0.5;
+  const base = y + s - 6;
+  const h = 10 + easeOut(p) * 42;
+  const headY = base - h;
+  g.strokeStyle = "#558b2f";
+  g.lineWidth = 2.6;
+  g.lineCap = "round";
+  g.beginPath(); g.moveTo(cx, base); g.lineTo(cx, headY); g.stroke();
+  g.fillStyle = "#7cb342";
+  for (let k = 0; k < 2; k++) {
+    const ly = base - h * (0.35 + k * 0.25);
+    const side = k ? 1 : -1;
+    g.beginPath(); g.ellipse(cx + side * 6, ly, 7, 2.6, side * 0.4, 0, Math.PI * 2); g.fill();
+  }
+  if (p < 0.35) { // young: just a bud
+    g.fillStyle = "#8bc34a"; circ(g, cx, headY, 3);
+    return;
+  }
+  // head faces the sun: rotate between -0.5 and +0.5 rad over the day
+  const ph = dayPhase(now);
+  const turn = Math.sin(ph * 2 * Math.PI) * 0.5;
+  const hr = 6 + easeOut(clamp((p - 0.35) / 0.65, 0, 1)) * 4;
+  g.save();
+  g.translate(cx, headY);
+  g.rotate(turn);
+  g.fillStyle = "#fdd835";
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    g.beginPath();
+    g.ellipse(Math.cos(a) * hr * 0.95, Math.sin(a) * hr * 0.95, hr * 0.42, hr * 0.22, a, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillStyle = "#5d4037";
+  circ(g, 0, 0, hr * 0.55);
+  g.fillStyle = "#795548";
+  circ(g, -hr * 0.1, -hr * 0.1, hr * 0.2);
+  g.restore();
+}
+
 function drawCellLabel(g, c, now) {
   if (!c.crop) return;
+  const def = CROPS[c.crop.k] || CROPS.wheat;
   const p = cropProgress(c, now);
-  const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
+  const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * def.grow / 1000)} s`;
   g.font = "bold 9px system-ui, sans-serif";
   const w = g.measureText(label).width + 10;
   g.fillStyle = p >= 1 ? "rgba(255,160,0,.92)" : "rgba(0,0,0,.55)";
@@ -726,7 +816,6 @@ function drawFish(g, x, y, type, t, ang) {
   g.restore();
 }
 
-// Fishing for any player. st = {state,tx,ty,t0,tb,te,type}; pl = {x,y,f}
 function drawFishingFor(gc, pl, st, now, time, showRod) {
   const hand = { x: pl.x + 9 * pl.f, y: pl.y - 8 };
   if (!st || st.state === "idle") {
@@ -872,14 +961,13 @@ function drawChar(g, p, t, label) {
   }
 }
 
-// ---------- Customers (walk along the path) ----------
+// ---------- Customers ----------
 const NPC_COLORS = [
   { shirt: "#7b1fa2", hat: "#d7b56d" },
   { shirt: "#2e7d32", hat: "#8d6e63" },
   { shirt: "#ef6c00", hat: "#d7b56d" }
 ];
 
-// Position, facing and mode of a customer at time now (ms)
 function custState(c, now) {
   const qd = CUST_QUEUE_D[c.slot];
   const walk = (qd / CUST_SPEED) * 1000;
@@ -977,6 +1065,7 @@ const statusEl  = document.getElementById("status");
 const selectEl  = document.getElementById("select");
 const gameEl    = document.getElementById("game");
 const infoEl    = document.getElementById("info");
+const clockEl   = document.getElementById("clock");
 const canvas    = document.getElementById("world");
 const joyEl     = document.getElementById("joy");
 const knobEl    = document.getElementById("knob");
@@ -986,9 +1075,8 @@ const openBtn   = document.getElementById("openShop");
 const shopModal = document.getElementById("shopModal");
 const closeBtn  = document.getElementById("closeShop");
 const coinsModal= document.getElementById("coinsModal");
-const seedCount = document.getElementById("seedCount");
+const seedInfoEl= document.getElementById("seedInfo");
 const buySoilBtn= document.getElementById("buy-soil");
-const buySeedBtn= document.getElementById("buy-seed");
 const buyRodBtn = document.getElementById("buy-rod");
 const fishListEl= document.getElementById("fishList");
 const delBtn    = document.getElementById("del-plot");
@@ -997,13 +1085,14 @@ const barnModal = document.getElementById("barnModal");
 const closeBarn = document.getElementById("closeBarn");
 const barFill   = document.getElementById("barFill");
 const barText   = document.getElementById("barText");
-const barWheat  = document.getElementById("barWheat");
+const barList   = document.getElementById("barList");
 const slotEls   = [0, 1, 2, 3, 4].map(i => document.querySelector(`.slot[data-i="${i}"]`));
 const slot0c    = document.getElementById("slot0c");
 const slot1c    = document.getElementById("slot1c");
 const slot2c    = document.getElementById("slot2c");
+const slot3c    = document.getElementById("slot3c");
+const slot4c    = document.getElementById("slot4c");
 
-// Local save: each character keeps its own inventory on this device
 function invKey(role) { return `fermer_inv_${ROOM_ID}_${role}`; }
 function loadInv(role) {
   try {
@@ -1023,7 +1112,7 @@ if (!configured) {
   const roomRef = db.ref(`rooms/${ROOM_ID}`);
   const playersRef = roomRef.child("players");
   const cellsRef = roomRef.child("cells");
-  const warehouseRef = roomRef.child("warehouse/wheat");
+  const storeRef = roomRef.child("store");     // shared: products + seeds
   const customersRef = roomRef.child("customers");
   const fishingRef = roomRef.child("fishing");
   const g = canvas.getContext("2d");
@@ -1037,7 +1126,7 @@ if (!configured) {
   let players = {};
   const remote = {};
   const seenA = {};
-  let fishStates = {};              // role -> fishing state of that player (from Firebase)
+  let fishStates = {};
   let joining = false;
   let loopStarted = false;
   let statusMsg = "";
@@ -1048,14 +1137,14 @@ if (!configured) {
   let camReady = false;
 
   let cells = {};
-  const appearAt = {};               // cell id -> time it first appeared (for pop-in)
+  const appearAt = {};
   let customers = {};
   let lastSpawnAt = 0;
   let selectedId = null;
   let drag = null;
   let coins = START_COINS;
-  let seeds = 0;
-  let wheatStock = 0;
+  let selectedSeed = "wheat";        // "wheat" | "corn" | "sunflower"
+  let store = { wheat: 0, corn: 0, sunflower: 0, sWheat: 0, sCorn: 0, sSun: 0 };
   let rodOwned = false;
   let selectedTool = null;
   let fishInv = { carp: 0, pike: 0, bream: 0 };
@@ -1063,14 +1152,12 @@ if (!configured) {
 
   const fishing = { state: "idle", tx: 0, ty: 0, t0: 0, tb: 0, te: 0, type: "" };
 
-  // ----- Activity (AFK) -----
   function touch() { if (me) me.lastAct = Date.now(); }
 
-  // ----- Save inventory locally (persists until browser data is cleared) -----
   function saveInv() {
     if (!me) return;
     try {
-      localStorage.setItem(invKey(me.role), JSON.stringify({ coins, seeds, rodOwned, fishInv }));
+      localStorage.setItem(invKey(me.role), JSON.stringify({ coins, rodOwned, fishInv }));
     } catch (e) {}
   }
 
@@ -1168,7 +1255,7 @@ if (!configured) {
     }
   }
 
-  // ----- Sync: fishing (separate node so every player sees it) -----
+  // ----- Sync: fishing -----
   fishingRef.on("value", snap => { fishStates = snap.val() || {}; });
 
   function fishSync() {
@@ -1191,6 +1278,23 @@ if (!configured) {
     updateShop();
   });
 
+  roomRef.child("meta/storeStarter").transaction(cur => {
+    if (cur) return;
+    return true;
+  }).then(res => {
+    if (res.committed && res.snapshot.val() === true) {
+      storeRef.transaction(v => {
+        v = v || {};
+        return {
+          wheat: v.wheat || 0, corn: v.corn || 0, sunflower: v.sunflower || 0,
+          sWheat: (v.sWheat || 0) + START_SEEDS.sWheat,
+          sCorn: (v.sCorn || 0) + START_SEEDS.sCorn,
+          sSun: (v.sSun || 0) + START_SEEDS.sSun
+        };
+      });
+    }
+  });
+
   roomRef.child("meta/cellsStarter").transaction(cur => {
     if (cur) return;
     return true;
@@ -1200,13 +1304,16 @@ if (!configured) {
     }
   });
 
-  // ----- Sync: warehouse -----
-  warehouseRef.on("value", snap => {
-    wheatStock = snap.val() || 0;
+  storeRef.on("value", snap => {
+    const v = snap.val() || {};
+    store = {
+      wheat: v.wheat || 0, corn: v.corn || 0, sunflower: v.sunflower || 0,
+      sWheat: v.sWheat || 0, sCorn: v.sCorn || 0, sSun: v.sSun || 0
+    };
     updateBarn();
+    updateHotbar();
   });
 
-  // ----- Sync: customers -----
   customersRef.on("value", snap => {
     customers = snap.val() || {};
   });
@@ -1255,7 +1362,6 @@ if (!configured) {
     return null;
   }
 
-  // ----- Toast -----
   function showToast(text) {
     toastEl.textContent = text;
     toastEl.style.opacity = "1";
@@ -1269,8 +1375,13 @@ if (!configured) {
     slot0c.textContent = rodOwned ? "haz\u0131r" : "yoxdur";
     slotEls[0].classList.toggle("off", !rodOwned);
     slotEls[0].classList.toggle("sel", selectedTool === "rod");
-    slot1c.textContent = seeds;
+    slotEls[1].classList.toggle("sel", selectedSeed === "wheat");
+    slotEls[3].classList.toggle("sel", selectedSeed === "corn");
+    slotEls[4].classList.toggle("sel", selectedSeed === "sunflower");
+    slot1c.textContent = store.sWheat;
     slot2c.textContent = totalFish();
+    slot3c.textContent = store.sCorn;
+    slot4c.textContent = store.sSun;
   }
   slotEls[0].addEventListener("click", () => {
     touch();
@@ -1278,10 +1389,17 @@ if (!configured) {
     selectedTool = selectedTool === "rod" ? null : "rod";
     updateHotbar();
   });
-  slotEls[1].addEventListener("click", () => {
+  function pickSeed(kind) {
     touch();
-    showToast(`Toxum: ${seeds}. Torpa\u011Fa toxunub \u0259kin.`);
-  });
+    selectedSeed = kind;
+    selectedTool = null;
+    updateHotbar();
+    const have = kind === "wheat" ? store.sWheat : kind === "corn" ? store.sCorn : store.sSun;
+    showToast(`${CROPS[kind].name} toxumu se\u00E7ildi (ambarda ${have}).`);
+  }
+  slotEls[1].addEventListener("click", () => pickSeed("wheat"));
+  slotEls[3].addEventListener("click", () => pickSeed("corn"));
+  slotEls[4].addEventListener("click", () => pickSeed("sunflower"));
   slotEls[2].addEventListener("click", () => {
     touch();
     showToast(`Bal\u0131q: Sazan ${fishInv.carp}, Xan ${fishInv.pike}, G\u00FCm\u00FC\u015F ${fishInv.bream}`);
@@ -1297,12 +1415,11 @@ if (!configured) {
   function updateShop() {
     coinsEl.textContent = `Pul: ${coins}`;
     coinsModal.textContent = `Pul: ${coins}`;
-    seedCount.textContent = seeds;
     delBtn.disabled = !(selectedId && cells[selectedId]);
     buySoilBtn.disabled = !me;
-    buySeedBtn.disabled = !me;
     buyRodBtn.disabled = !me || rodOwned;
     buyRodBtn.textContent = rodOwned ? "Var" : "Al";
+    seedInfoEl.textContent = `Toxumlar ambardand\u0131r: Bu\u011Fda ${store.sWheat} \u00B7 Qar\u011F\u0131dal\u0131 ${store.sCorn} \u00B7 G\u00FCn\u0259baxan ${store.sSun}`;
     fishListEl.textContent = `Bal\u0131qlar\u0131m: Sazan ${fishInv.carp} \u00B7 Xan ${fishInv.pike} \u00B7 G\u00FCm\u00FC\u015F ${fishInv.bream}`;
     updateHotbar();
     saveInv();
@@ -1315,12 +1432,12 @@ if (!configured) {
   barnModal.addEventListener("click", e => { if (e.target === barnModal) closeBarnModal(); });
 
   function updateBarn() {
-    const used = wheatStock;
+    const used = store.wheat + store.corn + store.sunflower;
     const free = Math.max(0, WAREHOUSE_CAP - used);
     const pct = Math.min(100, (used / WAREHOUSE_CAP) * 100);
     barFill.style.width = pct + "%";
     barText.textContent = `Tutum: ${WAREHOUSE_CAP}  \u00B7  \u0130stifad\u0259 olunub: ${used}  \u00B7  Bo\u015F yer: ${free}`;
-    barWheat.textContent = used;
+    barList.textContent = `Bu\u011Fda: ${store.wheat} \u00B7 Qar\u011F\u0131dal\u0131: ${store.corn} \u00B7 G\u00FCn\u0259baxan: ${store.sunflower}`;
   }
 
   buySoilBtn.addEventListener("click", () => {
@@ -1334,16 +1451,6 @@ if (!configured) {
     selectedId = ref.key;
     updateShop();
     showToast("Torpaq al\u0131nd\u0131. Yeni sah\u0259 \u0259lav\u0259 olundu.");
-  });
-
-  buySeedBtn.addEventListener("click", () => {
-    if (!me) return;
-    touch();
-    if (coins < SEED_PRICE) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
-    coins -= SEED_PRICE;
-    seeds += 1;
-    updateShop();
-    showToast("Bu\u011Fda toxumu al\u0131nd\u0131.");
   });
 
   buyRodBtn.addEventListener("click", () => {
@@ -1366,40 +1473,59 @@ if (!configured) {
     updateShop();
   });
 
-  // ----- Cell taps -----
+  // ----- Cell taps: plant from store seeds, harvest into store -----
+  function plant(id, kind) {
+    const def = CROPS[kind];
+    const have = store[def.seed] || 0;
+    if (have < 1) { showToast(`Ambarda ${def.name.toLowerCase()} toxumu yoxdur.`); return; }
+    storeRef.transaction(v => {
+      v = v || {};
+      if ((v[def.seed] || 0) < 1) return;              // abort: no seed
+      const nv = Object.assign({}, v);
+      nv[def.seed] = v[def.seed] - 1;
+      return nv;
+    }).then(res => {
+      if (!res.committed) { showToast("Ambarda toxum qalmay\u0131b."); return; }
+      cellsRef.child(id).update({ crop: { k: kind, t: serverNow() } });
+      showToast(`${def.name} \u0259kildi.`);
+    });
+  }
+
+  function harvest(id, kind) {
+    const def = CROPS[kind];
+    storeRef.transaction(v => {
+      v = v || {};
+      const total = (v.wheat || 0) + (v.corn || 0) + (v.sunflower || 0);
+      if (total + def.yield > WAREHOUSE_CAP) return;   // no room: abort
+      const nv = Object.assign({}, v);
+      nv[kind] = (v[kind] || 0) + def.yield;
+      nv[def.seed] = (v[def.seed] || 0) + 1;            // one seed returns to the store
+      return nv;
+    }).then(res => {
+      if (res.committed) {
+        cellsRef.child(id).child("crop").remove();
+        showToast(`${def.name} ambara \u0259lav\u0259 olundu: +${def.yield}. Toxum da geri qayd\u0131b.`);
+      } else {
+        showToast("Ambarda yer yoxdur. \u018Fvv\u0259l ambar\u0131 bo\u015Faldın.");
+      }
+    });
+  }
+
   function handleTap(id) {
     const c = cells[id];
     if (!c) return;
     touch();
     if (c.crop) {
+      const def = CROPS[c.crop.k] || CROPS.wheat;
       const p = cropProgress(c, serverNow());
       if (p < 1) {
-        showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * GROW_MS / 1000)} s`);
+        showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * def.grow / 1000)} s`);
         return;
       }
-      warehouseRef.transaction(n => {
-        n = n || 0;
-        if (n + WHEAT_YIELD > WAREHOUSE_CAP) return;
-        return n + WHEAT_YIELD;
-      }).then(res => {
-        if (res.committed) {
-          cellsRef.child(id).child("crop").remove();
-          const left = WAREHOUSE_CAP - res.snapshot.val();
-          showToast(`M\u0259hsul ambara \u0259lav\u0259 olundu: +${WHEAT_YIELD}. Ambarda ${left} yer qald\u0131.`);
-        } else {
-          showToast("Ambarda yer yoxdur. \u018Fvv\u0259l ambar\u0131 bo\u015Faldın.");
-        }
-      });
+      harvest(id, c.crop.k);
       return;
     }
-    if (seeds > 0) {
-      seeds -= 1;
-      cellsRef.child(id).update({ crop: { k: "wheat", t: serverNow() } });
-      showToast("Toxum \u0259kildi.");
-      updateShop();
-    } else {
-      showToast("Toxum yoxdur, ma\u011Fazadan al\u0131n.");
-    }
+    plant(id, selectedSeed);
   }
 
   // ----- Fishing -----
@@ -1473,7 +1599,7 @@ if (!configured) {
     }
   }
 
-  // ----- Customers: leader spawns/cleans; anyone can serve -----
+  // ----- Customers -----
   function isLeader() {
     if (!me) return false;
     return me.role === "boy" || !isAlive("boy");
@@ -1514,10 +1640,12 @@ if (!configured) {
     if (!c || c.served) return;
     touch();
     if (c.item === "wheat") {
-      warehouseRef.transaction(n => {
-        n = n || 0;
-        if (n < c.qty) return;
-        return n - c.qty;
+      storeRef.transaction(v => {
+        v = v || {};
+        if ((v.wheat || 0) < c.qty) return;
+        const nv = Object.assign({}, v);
+        nv.wheat = v.wheat - c.qty;
+        return nv;
       }).then(res => {
         if (!res.committed) { showToast("Ambarda yetərli bu\u011Fda yoxdur."); return; }
         customersRef.child(id).update({ served: serverNow() });
@@ -1609,7 +1737,7 @@ if (!configured) {
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
 
-  // ----- Own presence -----
+  // ----- Presence -----
   function sendState(now) {
     const key = `${me.x.toFixed(1)}|${me.y.toFixed(1)}|${me.f}|${me.m}`;
     if (key === lastKey) return;
@@ -1622,7 +1750,6 @@ if (!configured) {
     });
   }
 
-  // Keeps an active player (fishing, planting, shopping) from being removed
   function heartbeat(now) {
     if (!me) return;
     if (now - lastHeartbeat < HEARTBEAT_MS) return;
@@ -1703,17 +1830,16 @@ if (!configured) {
       return;
     }
 
-    // restore this character's saved inventory from this device
     const saved = loadInv(role);
     coins = saved && typeof saved.coins === "number" ? saved.coins : START_COINS;
-    seeds = saved && saved.seeds ? saved.seeds : 0;
     rodOwned = !!(saved && saved.rodOwned);
     fishInv = {
       carp: saved && saved.fishInv ? saved.fishInv.carp || 0 : 0,
       pike: saved && saved.fishInv ? saved.fishInv.pike || 0 : 0,
       bream: saved && saved.fishInv ? saved.fishInv.bream || 0 : 0
     };
-    selectedTool = rodOwned ? null : null;
+    selectedTool = null;
+    selectedSeed = "wheat";
 
     me = { role, x: start.x, y: start.y, f: 1, m: false, lastAct: Date.now() };
     vx = 0; vy = 0;
@@ -1744,7 +1870,11 @@ if (!configured) {
       (waiting ? " \u2014 dig\u0259r oyun\u00E7u g\u00F6zl\u0259nilir..." : "");
   }
 
-  // ----- Canvas sizing -----
+  function updateClock(now) {
+    const dark = dayDarkness(now);
+    clockEl.textContent = dark > 0.5 ? "Gec\u0259" : "G\u00FCnd\u00FCz";
+  }
+
   function resizeCanvas() {
     const cw = Math.max(220, Math.min(window.innerWidth - 24, 760));
     const ch = Math.round(Math.min(cw * 0.66, window.innerHeight * 0.56));
@@ -1762,7 +1892,6 @@ if (!configured) {
 
     if (me) {
       const d = inputVec();
-      // eased velocity: slides in and out instead of snapping
       const tvx = d.x * SPEED, tvy = d.y * SPEED;
       vx += (tvx - vx) * Math.min(1, dt * ACCEL);
       vy += (tvy - vy) * Math.min(1, dt * ACCEL);
@@ -1789,7 +1918,10 @@ if (!configured) {
       r.y += (r.ty - r.y) * a;
     }
 
-    if (me) render(t, dt);
+    if (me) {
+      render(t, dt);
+      updateClock(serverNow());
+    }
     requestAnimationFrame(loop);
   }
 
@@ -1812,13 +1944,15 @@ if (!configured) {
     const camX = cam.x, camY = cam.y;
     lastCam = { x: camX, y: camY, s };
 
+    const now = serverNow();
+    const dark = dayDarkness(now);
+
     g.setTransform(dpr * s, 0, 0, dpr * s, -camX * dpr * s, -camY * dpr * s);
     g.fillStyle = "#7cb94a";
     g.fillRect(camX, camY, VW, vh);
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWater(g, time);
 
-    const now = serverNow();
     const perf = performance.now();
     const ids = Object.keys(cells);
     const scaleOf = id => {
@@ -1838,9 +1972,9 @@ if (!configured) {
       drawCellLabel(g, c, now);
     });
 
-    // ground objects, sorted by bottom edge
     const things = [];
     things.push({ y: BARN.y + BARN.h, draw: () => drawBarn(g) });
+    LAMPS.forEach(L => things.push({ y: L.y + 14, draw: () => drawLampPost(g, L) }));
 
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
     for (const k in remote) {
@@ -1853,22 +1987,39 @@ if (!configured) {
       const c = customers[id];
       const st = custState(c, now);
       if (st.gone) continue;
-      things.push({
-        y: st.y,
-        draw: () => drawNpc(g, st.x, st.y, st.f, st.mode, c, now, time, st)
-      });
+      things.push({ y: st.y, draw: () => drawNpc(g, st.x, st.y, st.f, st.mode, c, now, time, st) });
     }
 
     things.sort((a, b) => a.y - b.y);
     things.forEach(th => th.draw());
 
-    // fishing: own line, and every other player's line from Firebase
     drawFishingFor(g, { x: me.x, y: me.y, f: me.f }, fishing, now, time, selectedTool === "rod");
     for (const role of Object.keys(fishStates)) {
       if (me && role === me.role) continue;
       const r = remote[role];
       if (!r) continue;
       drawFishingFor(g, { x: r.x, y: r.y, f: r.f }, fishStates[role], now, time, false);
+    }
+
+    if (dark > 0.02) {
+      g.fillStyle = `rgba(12,20,55,${0.62 * dark})`;
+      g.fillRect(camX, camY, VW, vh);
+      g.globalCompositeOperation = "lighter";
+      LAMPS.forEach(L => {
+        const r = 70;
+        const gr = g.createRadialGradient(L.x, L.y, 4, L.x, L.y, r);
+        gr.addColorStop(0, `rgba(255,214,120,${0.55 * dark})`);
+        gr.addColorStop(1, "rgba(255,214,120,0)");
+        g.fillStyle = gr;
+        g.fillRect(L.x - r, L.y - r, r * 2, r * 2);
+      });
+      const pr = 60;
+      const pg = g.createRadialGradient(me.x, me.y - 10, 4, me.x, me.y - 10, pr);
+      pg.addColorStop(0, `rgba(255,240,200,${0.35 * dark})`);
+      pg.addColorStop(1, "rgba(255,240,200,0)");
+      g.fillStyle = pg;
+      g.fillRect(me.x - pr, me.y - 10 - pr, pr * 2, pr * 2);
+      g.globalCompositeOperation = "source-over";
     }
   }
 }
