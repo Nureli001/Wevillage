@@ -35,6 +35,19 @@
   .choice:disabled { background: #bdbdbd; box-shadow: 0 4px 0 #9e9e9e; cursor: not-allowed; }
   #status { font-size: .95rem; color: #5d4037; text-align: center; min-height: 1.2em; }
 
+  /* Menu scene: farm drawings around the card */
+  #menuDeco {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+  }
+  #select { position: relative; z-index: 1; }
+  #logo { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  #logoText {
+    font-weight: 900; letter-spacing: 3px; font-size: 1.05rem; color: #33691e;
+    text-shadow: 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,.12);
+  }
+  #select h1 { margin-top: 2px; }
+
   #game { display: none; flex-direction: column; align-items: center; gap: 6px; }
   #topbar {
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -161,7 +174,107 @@
 </head>
 <body>
 
+<svg id="menuDeco" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <radialGradient id="sunG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff59d"/>
+      <stop offset="60%" stop-color="#ffd54f"/>
+      <stop offset="100%" stop-color="#ffd54f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9ccc65"/>
+      <stop offset="100%" stop-color="#6a9f35"/>
+    </linearGradient>
+  </defs>
+  <!-- sun and clouds -->
+  <circle cx="880" cy="110" r="110" fill="url(#sunG)"/>
+  <circle cx="880" cy="110" r="42" fill="#ffe082"/>
+  <g fill="#ffffff" opacity=".85">
+    <ellipse cx="170" cy="120" rx="70" ry="22"/><ellipse cx="200" cy="108" rx="40" ry="20"/>
+    <ellipse cx="640" cy="90" rx="60" ry="18"/><ellipse cx="665" cy="80" rx="34" ry="16"/>
+  </g>
+  <!-- hills and field -->
+  <path d="M0 430 Q250 380 500 430 T1000 420 L1000 600 L0 600Z" fill="url(#grassG)"/>
+  <path d="M0 500 Q300 470 600 505 T1000 495 L1000 600 L0 600Z" fill="#7cb342"/>
+  <!-- pond with fish (left) -->
+  <ellipse cx="120" cy="545" rx="90" ry="28" fill="#4fc3f7" stroke="#e1f5fe" stroke-width="4"/>
+  <g>
+    <ellipse cx="95" cy="545" rx="13" ry="6" fill="#e8a33d"/>
+    <path d="M82 545 L74 539 L74 551Z" fill="#c97b1a"/>
+    <ellipse cx="150" cy="552" rx="10" ry="4.5" fill="#3f7a4a"/>
+    <path d="M141 552 L134 548 L134 556Z" fill="#2c5a35"/>
+  </g>
+  <!-- barn (left) -->
+  <g transform="translate(40 300)">
+    <rect x="18" y="70" width="110" height="82" fill="#b5483a"/>
+    <polygon points="0,76 73,14 146,76" fill="#5d2e22"/>
+    <rect x="58" y="108" width="30" height="44" fill="#f5f0e6"/>
+    <rect x="40" y="92" width="6" height="6" fill="#f5f0e6"/>
+    <rect x="98" y="92" width="6" height="6" fill="#f5f0e6"/>
+  </g>
+  <!-- wheat sheaf (left) -->
+  <g transform="translate(260 430)" stroke="#c9a227" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M0 80 Q-6 40 0 0"/><path d="M12 80 Q14 40 8 -6"/><path d="M-12 80 Q-16 40 -8 -4"/>
+    <path d="M24 80 Q28 46 20 10"/><path d="M-24 80 Q-26 46 -20 12"/>
+  </g>
+  <g fill="#f9a825" stroke="#c77800" stroke-width="1.5">
+    <ellipse cx="0" cy="-6" rx="5" ry="10"/><ellipse cx="8" cy="-12" rx="5" ry="10"/>
+    <ellipse cx="-8" cy="-10" rx="5" ry="10"/><ellipse cx="20" cy="6" rx="5" ry="10"/>
+    <ellipse cx="-20" cy="8" rx="5" ry="10"/>
+  </g>
+  <!-- sunflower (right) -->
+  <g transform="translate(790 260)">
+    <path d="M0 0 L0 230" stroke="#558b2f" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="-14" cy="120" rx="18" ry="7" fill="#7cb342" transform="rotate(-25 -14 120)"/>
+    <ellipse cx="14" cy="160" rx="18" ry="7" fill="#7cb342" transform="rotate(25 14 160)"/>
+    <g fill="#fdd835" stroke="#f9a825" stroke-width="1.5">
+      <ellipse cx="0" cy="-30" rx="11" ry="22"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(30)"/>
+      <ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(60)"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(90)"/>
+      <ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(120)"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(150)"/>
+      <ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(180)"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(210)"/>
+      <ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(240)"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(270)"/>
+      <ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(300)"/><ellipse cx="0" cy="-30" rx="11" ry="22" transform="rotate(330)"/>
+    </g>
+    <circle cx="0" cy="-30" r="17" fill="#5d4037"/>
+    <circle cx="-5" cy="-35" r="3" fill="#795548"/>
+  </g>
+  <!-- corn (right, lower) -->
+  <g transform="translate(905 430)">
+    <path d="M0 110 Q-4 60 0 0" stroke="#558b2f" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="-10" cy="60" rx="12" ry="4" fill="#7cb342" transform="rotate(-20 -10 60)"/>
+    <ellipse cx="10" cy="48" rx="12" ry="4" fill="#7cb342" transform="rotate(20 10 48)"/>
+    <ellipse cx="6" cy="22" rx="8" ry="16" fill="#ffd600" stroke="#c6a700" stroke-width="1.5"/>
+  </g>
+  <!-- fishing rod (bottom right) -->
+  <g stroke="#6d4c41" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M640 590 L720 470 L760 470"/>
+  </g>
+  <path d="M760 470 Q762 500 752 520" stroke="#424242" stroke-width="1.5" fill="none"/>
+  <circle cx="752" cy="524" r="4" fill="#ef5350"/>
+  <!-- small sprouts scattered on the field -->
+  <g stroke="#558b2f" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M360 580 q-6 -14 0 -24"/><path d="M372 580 q6 -16 0 -28"/>
+    <path d="M520 585 q-6 -14 0 -24"/><path d="M530 585 q6 -14 0 -22"/>
+    <path d="M430 570 q-5 -12 0 -20"/>
+  </g>
+  <!-- soil plots (rounded tiles) -->
+  <g>
+    <rect x="455" y="560" width="46" height="34" rx="6" fill="#8d6a46" stroke="#6b4a2b" stroke-width="3"/>
+    <rect x="506" y="560" width="46" height="34" rx="6" fill="#8d6a46" stroke="#6b4a2b" stroke-width="3"/>
+  </g>
+</svg>
 <div id="select">
+  <div id="logo">
+    <svg viewBox="0 0 120 80" width="96" height="64" aria-hidden="true">
+      <circle cx="96" cy="16" r="10" fill="#ffd54f"/>
+      <path d="M60 74 L60 40" stroke="#558b2f" stroke-width="4" stroke-linecap="round"/>
+      <path d="M60 52 Q40 48 36 30 Q56 32 60 52Z" fill="#7cb342"/>
+      <path d="M60 46 Q80 40 86 22 Q66 26 60 46Z" fill="#8bc34a"/>
+      <path d="M60 14 Q55 4 60 -2 Q65 4 60 14Z" fill="#f9a825" transform="translate(0 10)"/>
+      <ellipse cx="60" cy="18" rx="5" ry="9" fill="#fbc02d" stroke="#c77800" stroke-width="1"/>
+    </svg>
+    <div id="logoText">FERMER</div>
+  </div>
   <h1>Karakterini se&ccedil;</h1>
   <button class="choice" id="btn-boy" data-role="boy">O&#287;lan</button>
   <button class="choice" id="btn-girl" data-role="girl">Q&#305;z</button>
@@ -1799,6 +1912,7 @@ if (!configured) {
     statusMsg = msg;
     gameEl.style.display = "none";
     selectEl.style.display = "flex";
+    document.getElementById("menuDeco").style.display = "";
     refreshButtons();
   }
 
@@ -1850,6 +1964,7 @@ if (!configured) {
     fishingRef.child(role).onDisconnect().remove();
 
     selectEl.style.display = "none";
+    document.getElementById("menuDeco").style.display = "none";
     gameEl.style.display = "flex";
     resizeCanvas();
     syncRemote();
