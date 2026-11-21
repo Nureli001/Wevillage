@@ -9,7 +9,7 @@
   html, body { height: 100%; }
   body {
     font-family: system-ui, -apple-system, sans-serif;
-    background: linear-gradient(#8fd3f4, #cdeffd);
+    background: linear-gradient(#9fdcf7, #d6f1ff);
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
@@ -22,56 +22,65 @@
   }
   #select {
     display: flex; flex-direction: column; gap: 14px; align-items: center;
-    background: #fff; padding: 24px; border-radius: 16px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.2); width: min(90vw, 340px);
+    background: #fffdf7; padding: 24px; border-radius: 22px;
+    box-shadow: 0 8px 24px rgba(40,90,120,.18); width: min(90vw, 340px);
   }
-  #select h1 { font-size: 1.4rem; text-align: center; }
+  #select h1 { font-size: 1.35rem; text-align: center; color: #4e342e; }
   .choice {
-    width: 100%; font-size: 1.2rem; padding: 14px; border: none; border-radius: 12px;
-    background: #4caf50; color: #fff; cursor: pointer;
+    width: 100%; font-size: 1.15rem; padding: 14px; border: none; border-radius: 16px;
+    background: linear-gradient(#6cc070, #4caf50); color: #fff; cursor: pointer;
+    box-shadow: 0 4px 0 #3b8e3f; transition: transform .12s ease, box-shadow .12s ease;
   }
-  .choice:disabled { background: #aaa; cursor: not-allowed; }
-  #status { font-size: .95rem; color: #333; text-align: center; min-height: 1.2em; }
+  .choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #3b8e3f; }
+  .choice:disabled { background: #bdbdbd; box-shadow: 0 4px 0 #9e9e9e; cursor: not-allowed; }
+  #status { font-size: .95rem; color: #5d4037; text-align: center; min-height: 1.2em; }
 
   #game { display: none; flex-direction: column; align-items: center; gap: 6px; }
   #topbar {
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    color: #fff; text-shadow: 0 1px 3px #000; font-size: .9rem; font-weight: bold;
+    color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); font-size: .9rem; font-weight: bold;
     width: 100%;
   }
   #info { flex: 1; min-height: 1.2em; }
   #topbar .right { display: flex; align-items: center; gap: 8px; }
-  #hint { color: #fff; font-size: .8rem; text-shadow: 0 1px 3px #000; text-align: center; }
+  #hint { color: #fff; font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.6); text-align: center; }
   #world {
     display: block;
-    border: 4px solid #5d4037;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    border: 4px solid #6d4c41;
+    border-radius: 18px;
+    box-shadow: 0 8px 22px rgba(40,70,40,.28);
     touch-action: none;
   }
   #bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 36px; }
-  #toast { color: #fff; font-size: .85rem; text-shadow: 0 1px 3px #000; text-align: right; flex: 1; }
+  #toast {
+    color: #fff; font-size: .85rem; text-shadow: 0 1px 3px rgba(0,0,0,.6); text-align: right; flex: 1;
+    transition: opacity .3s ease;
+  }
 
   #hotbar { display: flex; gap: 8px; justify-content: center; width: 100%; }
   .slot {
     width: 64px; height: 50px;
-    background: rgba(255,255,255,.9);
-    border: 2px solid #8d6e63; border-radius: 10px;
+    background: linear-gradient(#fffdf7, #f3ead8);
+    border: 2px solid #a1887f; border-radius: 14px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: .72rem; color: #3e2723; cursor: pointer;
-    box-shadow: 0 3px 0 rgba(0,0,0,.25);
+    font-size: .72rem; color: #4e342e; cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.18);
+    transition: transform .12s ease;
   }
-  .slot.sel { border-color: #ffeb3b; box-shadow: 0 0 0 2px #ffeb3b, 0 3px 0 rgba(0,0,0,.25); }
+  .slot:active { transform: scale(.96); }
+  .slot.sel { border-color: #ffd54f; box-shadow: 0 0 0 3px rgba(255,213,79,.55), 0 3px 0 rgba(0,0,0,.18); }
   .slot.off { opacity: .45; }
   .slot b { font-size: .85rem; }
 
   .btn {
-    border: none; border-radius: 8px; background: #4caf50; color: #fff;
+    border: none; border-radius: 12px; background: linear-gradient(#6cc070, #4caf50); color: #fff;
     padding: 8px 12px; font-size: .9rem; cursor: pointer;
+    box-shadow: 0 3px 0 #3b8e3f; transition: transform .12s ease;
   }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #3b8e3f; }
   .btn.small { padding: 6px 10px; font-size: .85rem; }
-  .btn.danger { background: #e53935; }
-  .btn:disabled { background: #bbb; cursor: not-allowed; }
+  .btn.danger { background: linear-gradient(#ef5350, #e53935); box-shadow: 0 3px 0 #b71c1c; }
+  .btn:disabled { background: #bdbdbd; box-shadow: 0 3px 0 #9e9e9e; cursor: not-allowed; }
 
   #joy {
     display: none;
@@ -79,8 +88,8 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: rgba(255,255,255,.35);
-    border: 3px solid rgba(0,0,0,.25);
+    background: radial-gradient(circle, rgba(255,255,255,.55), rgba(255,255,255,.2));
+    border: 3px solid rgba(255,255,255,.6);
     touch-action: none;
     margin-top: 2px;
   }
@@ -91,58 +100,66 @@
   #knob {
     position: absolute; left: 50%; top: 50%;
     width: 52px; height: 52px; border-radius: 50%;
-    background: rgba(255,255,255,.9); border: 2px solid rgba(0,0,0,.2);
+    background: radial-gradient(circle at 35% 35%, #ffffff, #e0e0e0);
+    border: 2px solid rgba(0,0,0,.12);
+    box-shadow: 0 3px 8px rgba(0,0,0,.2);
     transform: translate(-50%, -50%); pointer-events: none;
+    transition: transform .08s linear;
   }
 
   .modal {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(0,0,0,.45);
+    background: rgba(30,40,30,.35);
     align-items: center; justify-content: center;
     z-index: 10;
     padding: 12px;
+    opacity: 0;
+    transition: opacity .2s ease;
   }
-  .modal.open { display: flex; }
+  .modal.open { display: flex; opacity: 1; }
   .card {
-    background: #fff8e1;
-    border: 3px solid #8d6e63;
-    border-radius: 14px;
-    padding: 16px;
+    background: #fffaf0;
+    border: 2px solid #d7ccc8;
+    border-radius: 22px;
+    padding: 18px;
     width: min(92vw, 340px);
     display: flex; flex-direction: column; gap: 12px;
-    color: #3e2723;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    color: #4e342e;
+    box-shadow: 0 12px 32px rgba(0,0,0,.25);
+    transform: translateY(8px) scale(.98);
+    transition: transform .22s ease;
   }
+  .modal.open .card { transform: none; }
   .card .head { display: flex; justify-content: space-between; align-items: center; }
   .card h2 { font-size: 1.1rem; }
   #coinsModal { font-weight: bold; }
   .row {
     display: flex; align-items: center; gap: 10px;
-    background: #fff; border-radius: 10px; padding: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,.12);
+    background: #fff; border-radius: 16px; padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
   }
   .row .grow { flex: 1; font-size: .9rem; }
-  .row .grow small { color: #6d4c41; }
+  .row .grow small { color: #8d6e63; }
   .icon.soil {
-    width: 44px; height: 44px; border-radius: 6px; border: 2px solid #6b4a2b; flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 12px; border: 2px solid #8d6e63; flex-shrink: 0;
     background: #8d6a46;
   }
   .icon.seed {
     width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-    background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #a1887f 34% 100%);
-    border: 2px solid #6d4c41;
+    background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #bcaaa4 34% 100%);
+    border: 2px solid #a1887f;
   }
   .icon.rod {
     width: 44px; height: 44px; flex-shrink: 0;
     background: linear-gradient(135deg, transparent 46%, #6d4c41 47% 52%, transparent 53%);
-    border: 2px dashed #8d6e63; border-radius: 8px;
+    border: 2px dashed #a1887f; border-radius: 12px;
   }
-  .barnPrev { width: 100%; border-radius: 10px; background: #fff; }
-  .bar { height: 14px; background: #e0d6c8; border-radius: 8px; overflow: hidden; }
-  #barFill { height: 100%; width: 0%; background: linear-gradient(#ffb74d, #ef6c00); transition: width .3s; }
+  .barnPrev { width: 100%; border-radius: 14px; background: #fff; }
+  .bar { height: 14px; background: #efe6d8; border-radius: 10px; overflow: hidden; }
+  #barFill { height: 100%; width: 0%; background: linear-gradient(#ffcc80, #ef6c00); transition: width .4s ease; }
   #barText { font-size: .85rem; text-align: center; }
-  #fishList { font-size: .85rem; text-align: center; color: #5d4037; }
+  #fishList { font-size: .85rem; text-align: center; color: #6d4c41; }
 </style>
 </head>
 <body>
@@ -259,10 +276,12 @@ const ROOM_ID = "main";
 const W = 1600, H = 1000;
 const VW = 480;
 const SPEED = 150;
+const ACCEL = 9;                 // how quickly movement eases in/out (softer feel)
+const CAM_EASE = 6;              // camera follow smoothness
 const R = 12;
 const SEND_MS = 100;
-const IDLE_MS = 20000;          // no activity for this long -> character removed
-const HEARTBEAT_MS = 5000;      // keeps an active (e.g. fishing) player alive
+const IDLE_MS = 20000;
+const HEARTBEAT_MS = 5000;
 const CELL = 64;
 const SOIL = { price: 50, refund: 25 };
 const SEED_PRICE = 10;
@@ -273,14 +292,13 @@ const GROW_MS = 30000;
 const START_COINS = 300;
 const BARN = { x: 470, y: 150, w: 150, h: 106 };
 
-// Customers
-const CUST_WALK = 2500;         // time to walk in / out
-const CUST_PATIENCE = 70000;    // time they wait after arriving
+// Customers walk along the dirt path from its start
+const CUST_SPEED = 80;           // path units per second
+const CUST_QUEUE_D = [560, 610, 660];   // path distance of each waiting spot
+const CUST_PATIENCE = 70000;
 const CUST_MAX = 3;
 const CUST_SPAWN_EVERY = 20000;
-const CUST_ENTRY = { x: 1640, y: 800 };
-const CUST_QUEUE_X = 1190, CUST_QUEUE_Y = 790, CUST_QUEUE_GAP = 95;
-const WHEAT_PRICE = 20;         // per unit
+const WHEAT_PRICE = 20;
 
 const CHARS = {
   boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 360, y: 420 } },
@@ -299,16 +317,26 @@ const FISH = {
 
 const PATH = [[300, 1000], [420, 760], [700, 640], [900, 560], [1150, 600], [1400, 780], [1600, 800]];
 
-function pathSamples() {
-  const pts = [];
-  for (let i = 0; i < PATH.length - 1; i++) {
-    const [ax, ay] = PATH[i], [bx, by] = PATH[i + 1];
-    const n = Math.ceil(Math.hypot(bx - ax, by - ay) / 20);
-    for (let k = 0; k <= n; k++) pts.push([ax + (bx - ax) * k / n, ay + (by - ay) * k / n]);
-  }
-  return pts;
+// Path helpers: cumulative length, position and direction by distance
+const PATH_SEG = [];
+let PATH_TOTAL = 0;
+for (let i = 0; i < PATH.length - 1; i++) {
+  const [ax, ay] = PATH[i], [bx, by] = PATH[i + 1];
+  const len = Math.hypot(bx - ax, by - ay);
+  PATH_SEG.push({ ax, ay, bx, by, len, start: PATH_TOTAL });
+  PATH_TOTAL += len;
 }
-const PATH_PTS = pathSamples();
+function pathAt(d) {
+  d = clamp(d, 0, PATH_TOTAL);
+  let s = PATH_SEG[PATH_SEG.length - 1];
+  for (const seg of PATH_SEG) { if (d <= seg.start + seg.len) { s = seg; break; } }
+  const k = s.len ? (d - s.start) / s.len : 0;
+  const dx = (s.bx - s.ax) / (s.len || 1);
+  const dy = (s.by - s.ay) / (s.len || 1);
+  return { x: lerp(s.ax, s.bx, k), y: lerp(s.ay, s.by, k), dir: dx >= 0 ? 1 : -1 };
+}
+const PATH_PTS = [];
+for (let d = 0; d <= PATH_TOTAL; d += 20) { const p = pathAt(d); PATH_PTS.push([p.x, p.y]); }
 
 function rng(seed) {
   let s = seed;
@@ -324,7 +352,6 @@ function genTrees() {
     if (Math.hypot(x - 760, y - 460) < 170) continue;
     if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 55)) continue;
     if (x > BARN.x - 40 && x < BARN.x + BARN.w + 40 && y > BARN.y - 40 && y < BARN.y + BARN.h + 40) continue;
-    if (x > 1120 && y > 720 && y < 860) continue;   // keep the customer queue clear
     list.push([x, y]);
   }
   return list;
@@ -356,6 +383,8 @@ function blocked(x, y) {
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function lerp(a, b, k) { return a + (b - a) * k; }
+function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
+function easeInOut(k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
 function snapCell(v) { return Math.round(v / CELL) * CELL; }
 function inLake(x, y) {
   const a = (x - LAKE.cx) / LAKE.rx, b = (y - LAKE.cy) / LAKE.ry;
@@ -418,19 +447,19 @@ function buildBackground() {
   const rnd = rng(42);
 
   const gg = g.createLinearGradient(0, 0, 0, H);
-  gg.addColorStop(0, "#a5d86b");
-  gg.addColorStop(1, "#6fae3c");
+  gg.addColorStop(0, "#b4e08a");
+  gg.addColorStop(1, "#7cb94a");
   g.fillStyle = gg;
   g.fillRect(0, 0, W, H);
 
   for (let i = 0; i < 90; i++) {
-    g.fillStyle = "rgba(255,255,200,.06)";
+    g.fillStyle = "rgba(255,255,200,.07)";
     g.beginPath();
     g.ellipse(rnd() * W, rnd() * H, 40 + rnd() * 60, 20 + rnd() * 30, 0, 0, Math.PI * 2);
     g.fill();
   }
-  g.strokeStyle = "rgba(50,100,25,.28)";
-  g.lineWidth = 1.3;
+  g.strokeStyle = "rgba(50,100,25,.22)";
+  g.lineWidth = 1.2;
   g.lineCap = "round";
   for (let i = 0; i < 3000; i++) {
     const x = rnd() * W, y = rnd() * H;
@@ -440,16 +469,18 @@ function buildBackground() {
     g.stroke();
   }
 
-  strokeSmooth(g, PATH, 58, "#a9794a");
-  strokeSmooth(g, PATH, 46, "#c99a60");
+  // dirt path with soft edges
+  strokeSmooth(g, PATH, 62, "rgba(120,80,40,.25)");
+  strokeSmooth(g, PATH, 56, "#b98a58");
+  strokeSmooth(g, PATH, 44, "#d2a870");
 
   const flowers = ["#fff176", "#f48fb1", "#ffffff", "#ce93d8", "#ffab91"];
   for (let i = 0; i < 400; i++) {
     const x = rnd() * W, y = rnd() * H;
     if (blocked(x, y)) continue;
-    if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 30)) continue;
+    if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 32)) continue;
     g.fillStyle = flowers[i % flowers.length];
-    circ(g, x, y, 2.2);
+    circ(g, x, y, 2.4);
   }
 
   [[70, 560, 14], [200, 560, 11], [250, 470, 10], [40, 420, 9], [210, 405, 8]].forEach(([x, y, r]) => {
@@ -460,36 +491,36 @@ function buildBackground() {
   });
 
   const cg = g.createLinearGradient(0, 0, 0, 150);
-  cg.addColorStop(0, "#6d6259");
-  cg.addColorStop(1, "#8b7d70");
+  cg.addColorStop(0, "#7d6e63");
+  cg.addColorStop(1, "#9c8b7d");
   g.fillStyle = cg;
   g.fillRect(0, 0, 165, 150);
-  g.fillStyle = "rgba(0,0,0,.18)";
+  g.fillStyle = "rgba(0,0,0,.15)";
   for (let i = 0; i < 14; i++) {
     g.beginPath();
     g.ellipse(rnd() * 165, rnd() * 150, 8 + rnd() * 12, 5 + rnd() * 8, 0, 0, Math.PI * 2);
     g.fill();
   }
-  g.fillStyle = "#4f463f";
+  g.fillStyle = "#5d5049";
   g.fillRect(0, 140, 165, 10);
 
   const lg = g.createRadialGradient(100, 465, 20, LAKE.cx, LAKE.cy, 130);
-  lg.addColorStop(0, "#4fc3f7");
-  lg.addColorStop(1, "#0277bd");
+  lg.addColorStop(0, "#6fd3fa");
+  lg.addColorStop(1, "#1b87c4");
   g.fillStyle = lg;
   g.beginPath(); g.ellipse(LAKE.cx, LAKE.cy, LAKE.rx, LAKE.ry, 0, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = "rgba(255,255,255,.85)";
+  g.strokeStyle = "rgba(255,255,255,.8)";
   g.lineWidth = 3;
   g.beginPath(); g.ellipse(LAKE.cx, LAKE.cy, LAKE.rx + 1, LAKE.ry + 1, 0, 0, Math.PI * 2); g.stroke();
 
   TREES.forEach(([x, y]) => {
-    g.fillStyle = "rgba(0,0,0,.2)";
-    g.beginPath(); g.ellipse(x, y + 2, 18, 7, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#6b4a2b";
-    g.fillRect(x - 3, y - 14, 6, 16);
-    g.fillStyle = "#2e7d32"; circ(g, x, y - 26, 18);
-    g.fillStyle = "#43a047"; circ(g, x - 4, y - 30, 11);
-    g.fillStyle = "#66bb6a"; circ(g, x - 7, y - 34, 5);
+    g.fillStyle = "rgba(0,0,0,.18)";
+    g.beginPath(); g.ellipse(x, y + 3, 19, 7, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#7a5634";
+    g.fillRect(x - 3, y - 14, 6, 17);
+    g.fillStyle = "#3a8f45"; circ(g, x, y - 26, 18);
+    g.fillStyle = "#52ad5a"; circ(g, x - 4, y - 30, 11);
+    g.fillStyle = "#7cc985"; circ(g, x - 7, y - 34, 5);
   });
 
   return c;
@@ -498,9 +529,9 @@ function buildBackground() {
 function drawWater(g, t) {
   const { x0, x1, y0, y1 } = FALL;
   const wg = g.createLinearGradient(x0, 0, x1, 0);
-  wg.addColorStop(0, "#cfefff");
+  wg.addColorStop(0, "#d8f3ff");
   wg.addColorStop(0.5, "#ffffff");
-  wg.addColorStop(1, "#9fd8f5");
+  wg.addColorStop(1, "#a6dcf7");
   g.fillStyle = wg;
   g.fillRect(x0, y0, x1 - x0, y1 - y0);
 
@@ -509,7 +540,7 @@ function drawWater(g, t) {
   g.lineCap = "round";
   for (let i = 0; i < 7; i++) {
     const x = x0 + 6 + i * 8;
-    const off = (t * 180 + i * 41) % (y1 - y0);
+    const off = (t * 150 + i * 41) % (y1 - y0);
     const len = 18 + (i % 3) * 6;
     g.beginPath();
     g.moveTo(x, y0 + off);
@@ -518,14 +549,14 @@ function drawWater(g, t) {
   }
 
   for (let i = 0; i < 12; i++) {
-    const k = (t * 1.5 + i / 12) % 1;
+    const k = (t * 1.2 + i / 12) % 1;
     const sx = FALL_BASE.x + (i - 6) * 2.8 * k;
     const sy = FALL_BASE.y - Math.sin(Math.PI * k) * 18 + 2;
     g.fillStyle = `rgba(255,255,255,${(1 - k) * 0.85})`;
     circ(g, sx, sy, 1.6 - k * 0.6);
   }
-  const p = (Math.sin(t * 5) + 1) / 2;
-  g.fillStyle = "rgba(255,255,255,.65)";
+  const p = (Math.sin(t * 3.5) + 1) / 2;
+  g.fillStyle = "rgba(255,255,255,.6)";
   g.beginPath(); g.ellipse(FALL_BASE.x, FALL_BASE.y + 1, 24 + p * 7, 7 + p * 2, 0, 0, Math.PI * 2); g.fill();
 
   g.save();
@@ -533,23 +564,23 @@ function drawWater(g, t) {
   g.ellipse(LAKE.cx, LAKE.cy, LAKE.rx, LAKE.ry, 0, 0, Math.PI * 2);
   g.clip();
   for (let i = 0; i < 3; i++) {
-    const k = (t * 0.5 + i / 3) % 1;
-    g.strokeStyle = `rgba(255,255,255,${(1 - k) * 0.7})`;
+    const k = (t * 0.4 + i / 3) % 1;
+    g.strokeStyle = `rgba(255,255,255,${(1 - k) * 0.6})`;
     g.lineWidth = 1.8;
     g.beginPath();
     g.ellipse(FALL_BASE.x, FALL_BASE.y + 2, 12 + k * 70, 5 + k * 22, 0, 0, Math.PI * 2);
     g.stroke();
   }
   for (let i = 0; i < 9; i++) {
-    const k = (t * 0.22 + i / 9) % 1;
+    const k = (t * 0.18 + i / 9) % 1;
     const bx = 50 + ((i * 53) % 150);
     const by = 540 - k * 110;
-    g.fillStyle = `rgba(255,255,255,${0.55 * (1 - k)})`;
+    g.fillStyle = `rgba(255,255,255,${0.5 * (1 - k)})`;
     circ(g, bx, by, 1.2 + k * 1.4);
   }
-  g.fillStyle = "rgba(255,255,255,.35)";
+  g.fillStyle = "rgba(255,255,255,.3)";
   for (let i = 0; i < 5; i++) {
-    const sx = 40 + ((i * 97 + t * 20) % 160);
+    const sx = 40 + ((i * 97 + t * 16) % 160);
     const sy = 430 + ((i * 23) % 90);
     g.fillRect(sx, sy, 10, 1.5);
   }
@@ -574,26 +605,31 @@ function drawBarn(g) {
   g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
 }
 
-// Soil cells (raised look)
-function drawCellShadow(g, c) {
-  g.fillStyle = "rgba(0,0,0,.30)";
+// Soil cells: raised tile with a soft pop-in when first placed
+function drawCellShadow(g, c, sc) {
+  g.fillStyle = "rgba(0,0,0,.25)";
   g.fillRect(c.x + 3, c.y + 5, CELL, CELL);
 }
-function drawCell(g, c, selected, now) {
+function drawCell(g, c, selected, now, sc) {
   const x = c.x, y = c.y, s = CELL;
+  g.save();
+  if (sc !== 1) {
+    g.translate(x + s / 2, y + s / 2);
+    g.scale(sc, sc);
+    g.translate(-(x + s / 2), -(y + s / 2));
+  }
   if (soilReady) {
     g.drawImage(soilImg, x, y, s, s);
   } else {
     g.fillStyle = "#8d6a46";
     g.fillRect(x, y, s, s);
   }
-  g.fillStyle = "rgba(255,255,255,.28)";
+  g.fillStyle = "rgba(255,255,255,.3)";
   g.fillRect(x, y, s, 2);
   g.fillRect(x, y, 2, s);
-  g.fillStyle = "rgba(0,0,0,.38)";
+  g.fillStyle = "rgba(0,0,0,.32)";
   g.fillRect(x, y + s - 3, s, 3);
   g.fillRect(x + s - 3, y, 3, s);
-
   if (c.crop) drawWheat(g, c, now);
   if (selected) {
     g.strokeStyle = "#ffeb3b";
@@ -602,6 +638,7 @@ function drawCell(g, c, selected, now) {
     g.strokeRect(x - 2, y - 2, s + 4, s + 4);
     g.setLineDash([]);
   }
+  g.restore();
 }
 
 function cropProgress(c, now) {
@@ -612,7 +649,6 @@ function cropProgress(c, now) {
 function drawWheat(g, c, now) {
   const p = cropProgress(c, now);
   const x = c.x, y = c.y, s = CELL;
-
   if (p >= 1 && wheatReady) {
     g.drawImage(wheatImg, x, y, s, s);
   } else {
@@ -621,7 +657,7 @@ function drawWheat(g, c, now) {
       for (let j = 0; j < 2; j++) {
         const bx = x + 8 + i * ((s - 16) / (cols - 1));
         const base = y + s - 8 - j * 8;
-        const hgt = 4 + p * 26;
+        const hgt = 4 + easeOut(p) * 26;
         g.strokeStyle = p < 0.5 ? "#7cb342" : (p < 1 ? "#c0ca33" : "#f9a825");
         g.lineWidth = 2;
         g.beginPath();
@@ -635,7 +671,7 @@ function drawWheat(g, c, now) {
       }
     }
   }
-  g.fillStyle = "rgba(0,0,0,.35)";
+  g.fillStyle = "rgba(0,0,0,.3)";
   g.fillRect(x + 4, y + s - 6, s - 8, 3);
   g.fillStyle = p >= 1 ? "#ffb300" : "#9ccc65";
   g.fillRect(x + 4, y + s - 6, (s - 8) * p, 3);
@@ -647,21 +683,21 @@ function drawCellLabel(g, c, now) {
   const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
   g.font = "bold 9px system-ui, sans-serif";
   const w = g.measureText(label).width + 10;
-  g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.6)";
-  rr(g, c.x + CELL / 2 - w / 2, c.y - 16, w, 12, 5);
+  g.fillStyle = p >= 1 ? "rgba(255,160,0,.92)" : "rgba(0,0,0,.55)";
+  rr(g, c.x + CELL / 2 - w / 2, c.y - 16, w, 12, 6);
   g.fillStyle = "#ffffff";
   g.textAlign = "center"; g.textBaseline = "middle";
   g.fillText(label, c.x + CELL / 2, c.y - 10);
 }
 
-// ---------- Fish (drawn in code) ----------
+// ---------- Fish ----------
 function drawFish(g, x, y, type, t, ang) {
   const f = FISH[type];
   if (!f) return;
   g.save();
   g.translate(x, y);
   g.rotate(ang);
-  g.rotate(Math.sin(t * 14) * 0.22);
+  g.rotate(Math.sin(t * 9) * 0.18);
   g.fillStyle = f.fin;
   g.beginPath();
   g.moveTo(-f.len / 2 + 2, 0);
@@ -670,14 +706,14 @@ function drawFish(g, x, y, type, t, ang) {
   g.closePath(); g.fill();
   g.fillStyle = f.body;
   g.beginPath(); g.ellipse(0, 0, f.len / 2, f.h / 2, 0, 0, Math.PI * 2); g.fill();
-  g.fillStyle = "rgba(255,255,255,.25)";
+  g.fillStyle = "rgba(255,255,255,.28)";
   g.beginPath(); g.ellipse(0, f.h / 6, f.len / 2.6, f.h / 5, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = f.fin;
   g.beginPath();
   g.moveTo(-2, -f.h / 2 + 1); g.lineTo(3, -f.h / 2 - 4); g.lineTo(5, -f.h / 2 + 1);
   g.closePath(); g.fill();
   if (type === "pike") {
-    g.strokeStyle = "rgba(0,0,0,.35)";
+    g.strokeStyle = "rgba(0,0,0,.3)";
     g.lineWidth = 1;
     for (let i = -4; i <= 4; i += 4) {
       g.beginPath(); g.moveTo(i, -f.h / 2 + 1); g.lineTo(i - 1, f.h / 2 - 1); g.stroke();
@@ -690,8 +726,7 @@ function drawFish(g, x, y, type, t, ang) {
   g.restore();
 }
 
-// Fishing rendering for any player. st = {state,tx,ty,t0,tb,te,type}
-// pl = {x,y,f}. showRod = draw an idle rod in hand (only for the local player with rod selected).
+// Fishing for any player. st = {state,tx,ty,t0,tb,te,type}; pl = {x,y,f}
 function drawFishingFor(gc, pl, st, now, time, showRod) {
   const hand = { x: pl.x + 9 * pl.f, y: pl.y - 8 };
   if (!st || st.state === "idle") {
@@ -703,39 +738,41 @@ function drawFishingFor(gc, pl, st, now, time, showRod) {
   }
   if (st.state === "catch") {
     const k = clamp((now - st.t0) / 1100, 0, 1);
+    const e = easeInOut(k);
     const tx = pl.x, ty = pl.y - 12;
-    const fx = lerp(st.tx, tx, k);
-    const fy = lerp(st.ty, ty, k) - Math.sin(Math.PI * k) * 42;
+    const fx = lerp(st.tx, tx, e);
+    const fy = lerp(st.ty, ty, e) - Math.sin(Math.PI * e) * 42;
     gc.strokeStyle = "#6d4c41"; gc.lineWidth = 2;
-    gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.lineTo(fx, fy); gc.stroke();
-    drawFish(gc, fx, fy, st.type, time, k < 1 ? -0.6 + k * 0.6 : 0);
+    gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.quadraticCurveTo((hand.x + fx) / 2, Math.min(hand.y, fy) - 10, fx, fy); gc.stroke();
+    drawFish(gc, fx, fy, st.type, time, k < 1 ? -0.6 + e * 0.6 : 0);
     return;
   }
   let bx, by;
   if (st.state === "cast") {
     const k = clamp((now - st.t0) / 500, 0, 1);
-    bx = lerp(hand.x, st.tx, k);
-    by = lerp(hand.y, st.ty, k) - Math.sin(Math.PI * k) * 30;
+    const e = easeOut(k);
+    bx = lerp(hand.x, st.tx, e);
+    by = lerp(hand.y, st.ty, e) - Math.sin(Math.PI * e) * 30;
   } else if (st.state === "wait") {
-    bx = st.tx; by = st.ty + Math.sin(now * 0.005) * 0.8;
+    bx = st.tx; by = st.ty + Math.sin(now * 0.004) * 0.9;
   } else {
-    bx = st.tx; by = st.ty + 3 + Math.sin(now * 0.03) * 1.2;
+    bx = st.tx; by = st.ty + 3 + Math.sin(now * 0.025) * 1.4;
   }
-  gc.strokeStyle = "rgba(60,40,30,.8)"; gc.lineWidth = 1;
+  gc.strokeStyle = "rgba(60,40,30,.75)"; gc.lineWidth = 1;
   gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.lineTo(bx, by); gc.stroke();
   if (st.state === "wait" || st.state === "bite") {
-    const k = (now % 1200) / 1200;
+    const k = (now % 1600) / 1600;
     gc.strokeStyle = `rgba(255,255,255,${0.6 * (1 - k)})`;
     gc.lineWidth = 1.2;
-    gc.beginPath(); gc.ellipse(bx, by + 2, 3 + k * 9, 1.5 + k * 3, 0, 0, Math.PI * 2); gc.stroke();
+    gc.beginPath(); gc.ellipse(bx, by + 2, 3 + k * 10, 1.5 + k * 3.5, 0, 0, Math.PI * 2); gc.stroke();
   }
-  gc.fillStyle = "#e53935"; circ(gc, bx, by, 2.4);
-  gc.fillStyle = "#ffffff"; circ(gc, bx, by - 2, 1.6);
+  gc.fillStyle = "#ef5350"; circ(gc, bx, by, 2.6);
+  gc.fillStyle = "#ffffff"; circ(gc, bx, by - 2, 1.7);
   if (st.state === "bite") {
     gc.fillStyle = "#ff1744";
     gc.font = "bold 12px system-ui, sans-serif";
     gc.textAlign = "center"; gc.textBaseline = "middle";
-    gc.fillText("!", bx, by - 14);
+    gc.fillText("!", bx, by - 14 - Math.abs(Math.sin(now * 0.01)) * 2);
   }
 }
 
@@ -743,12 +780,12 @@ function drawFishingFor(gc, pl, st, now, time, showRod) {
 function drawChar(g, p, t, label) {
   const x = p.x, f = p.f || 1, moving = !!p.m;
   const isBoy = p.role === "boy";
-  const ph = t * 11;
-  const bob = moving ? Math.abs(Math.sin(ph)) * 1.8 : Math.sin(t * 2) * 0.5;
-  const sw = moving ? Math.sin(ph) * 3 : 0;
+  const ph = t * 9;
+  const bob = moving ? Math.abs(Math.sin(ph)) * 1.6 : Math.sin(t * 1.8) * 0.5;
+  const sw = moving ? Math.sin(ph) * 2.6 : 0;
   const cy = p.y - bob;
 
-  g.fillStyle = "rgba(0,0,0,.22)";
+  g.fillStyle = "rgba(0,0,0,.2)";
   g.beginPath(); g.ellipse(x, p.y + 9, 9, 3.5, 0, 0, Math.PI * 2); g.fill();
 
   g.fillStyle = isBoy ? "#33334d" : "#5a4a7a";
@@ -765,7 +802,7 @@ function drawChar(g, p, t, label) {
 
   if (isBoy) {
     g.fillStyle = CHARS.boy.color;
-    rr(g, x - 9, cy - 6, 18, 12, 4);
+    rr(g, x - 9, cy - 6, 18, 12, 5);
     g.fillStyle = "#5a3a1e";
     rr(g, x - 9, cy + 2, 18, 2, 1);
   } else {
@@ -827,7 +864,7 @@ function drawChar(g, p, t, label) {
     g.font = "bold 9px system-ui, sans-serif";
     const w = g.measureText(label).width + 8;
     g.fillStyle = "rgba(0,0,0,.55)";
-    rr(g, x - w / 2, hy - 24, w, 11, 4);
+    rr(g, x - w / 2, hy - 24, w, 11, 5);
     g.fillStyle = "#ffffff";
     g.textAlign = "center";
     g.textBaseline = "middle";
@@ -835,34 +872,39 @@ function drawChar(g, p, t, label) {
   }
 }
 
-// ---------- Customers (NPC shoppers waiting on the path) ----------
+// ---------- Customers (walk along the path) ----------
 const NPC_COLORS = [
   { shirt: "#7b1fa2", hat: "#d7b56d" },
   { shirt: "#2e7d32", hat: "#8d6e63" },
   { shirt: "#ef6c00", hat: "#d7b56d" }
 ];
 
-// Position and mode of a customer at a given time (ms)
+// Position, facing and mode of a customer at time now (ms)
 function custState(c, now) {
-  const entry = CUST_ENTRY;
-  const tgt = { x: CUST_QUEUE_X + c.slot * CUST_QUEUE_GAP, y: CUST_QUEUE_Y };
-  const arrive = c.spawn + CUST_WALK;
+  const qd = CUST_QUEUE_D[c.slot];
+  const walk = (qd / CUST_SPEED) * 1000;
+  const arrive = c.spawn + walk;
   const deadline = arrive + CUST_PATIENCE;
+
   if (c.served) {
-    const k = clamp((now - c.served) / CUST_WALK, 0, 1);
+    const k = clamp((now - c.served) / walk, 0, 1);
     if (k >= 1) return { gone: true };
-    return { x: lerp(tgt.x, entry.x, k), y: tgt.y, mode: "leave", happy: true };
+    const p = pathAt(qd * (1 - k));
+    return { x: p.x, y: p.y, f: -p.dir, mode: "leave", happy: true };
   }
   if (now >= deadline) {
-    const k = clamp((now - deadline) / CUST_WALK, 0, 1);
+    const k = clamp((now - deadline) / walk, 0, 1);
     if (k >= 1) return { gone: true };
-    return { x: lerp(tgt.x, entry.x, k), y: tgt.y, mode: "leave", angry: true };
+    const p = pathAt(qd * (1 - k));
+    return { x: p.x, y: p.y, f: -p.dir, mode: "leave", angry: true };
   }
   if (now < arrive) {
-    const k = clamp((now - c.spawn) / CUST_WALK, 0, 1);
-    return { x: lerp(entry.x, tgt.x, k), y: tgt.y, mode: "walk" };
+    const k = clamp((now - c.spawn) / walk, 0, 1);
+    const p = pathAt(qd * k);
+    return { x: p.x, y: p.y, f: p.dir, mode: "walk" };
   }
-  return { x: tgt.x, y: tgt.y, mode: "wait", left: clamp((deadline - now) / CUST_PATIENCE, 0, 1) };
+  const p = pathAt(qd);
+  return { x: p.x, y: p.y, f: 1, mode: "wait", left: clamp((deadline - now) / CUST_PATIENCE, 0, 1) };
 }
 
 function custRequestText(c) {
@@ -870,15 +912,15 @@ function custRequestText(c) {
   return `${c.qty} ${FISH[c.item].name}`;
 }
 
-function drawNpc(g, x, y, mode, c, now, t, st) {
+function drawNpc(g, x, y, f, mode, c, now, t, st) {
   const color = NPC_COLORS[c.slot % NPC_COLORS.length];
   const walking = mode === "walk" || mode === "leave";
-  const ph = t * 11;
-  const sw = walking ? Math.sin(ph) * 3 : 0;
-  const bob = walking ? Math.abs(Math.sin(ph)) * 1.5 : Math.sin(t * 2) * 0.4;
+  const ph = t * 9;
+  const sw = walking ? Math.sin(ph) * 2.6 : 0;
+  const bob = walking ? Math.abs(Math.sin(ph)) * 1.4 : Math.sin(t * 1.8) * 0.4;
   const cy = y - bob;
 
-  g.fillStyle = "rgba(0,0,0,.22)";
+  g.fillStyle = "rgba(0,0,0,.2)";
   g.beginPath(); g.ellipse(x, y + 9, 9, 3.5, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = "#3a3a3a";
   rr(g, x - 5.5 + sw, cy + 3, 4.5, 9, 2);
@@ -887,7 +929,7 @@ function drawNpc(g, x, y, mode, c, now, t, st) {
   rr(g, x - 6 + sw, cy + 10.5, 5.5, 2.5, 1.2);
   rr(g, x + 0.5 - sw, cy + 10.5, 5.5, 2.5, 1.2);
   g.fillStyle = color.shirt;
-  rr(g, x - 9, cy - 6, 18, 12, 4);
+  rr(g, x - 9, cy - 6, 18, 12, 5);
   g.fillStyle = "#f6cba0";
   circ(g, x - 10.5, cy - 1 - sw * 0.6, 2.8);
   circ(g, x + 10.5, cy - 1 + sw * 0.6, 2.8);
@@ -899,26 +941,25 @@ function drawNpc(g, x, y, mode, c, now, t, st) {
   g.fillStyle = color.hat;
   g.beginPath(); g.ellipse(x, hy - 7, 13, 3, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = "#1e1e1e";
-  circ(g, x - 3, hy + 1, 1.4);
-  circ(g, x + 3, hy + 1, 1.4);
+  circ(g, x - 3 + f * 1, hy + 1, 1.4);
+  circ(g, x + 3 + f * 1, hy + 1, 1.4);
 
-  if (mode === "wait") drawBubble(g, x, hy - 26, c, now, st);
+  if (mode === "wait") drawBubble(g, x, hy - 26, c, st);
   if (st && st.happy) drawMood(g, x, hy - 30, "#2e7d32", "\u2665");
   if (st && st.angry) drawMood(g, x, hy - 30, "#c62828", "!");
 }
 
-function drawBubble(g, x, y, c, now, st) {
+function drawBubble(g, x, y, c, st) {
   const text = custRequestText(c);
   g.font = "bold 10px system-ui, sans-serif";
   const w = g.measureText(text).width + 14;
-  g.fillStyle = "#ffffff";
-  rr(g, x - w / 2, y - 12, w, 16, 6);
-  g.fillStyle = "#3e2723";
+  g.fillStyle = "rgba(255,255,255,.96)";
+  rr(g, x - w / 2, y - 12, w, 16, 8);
+  g.fillStyle = "#4e342e";
   g.textAlign = "center"; g.textBaseline = "middle";
   g.fillText(text, x, y - 4);
-  // patience bar under the bubble
   const p = st ? st.left : 1;
-  g.fillStyle = "rgba(0,0,0,.35)";
+  g.fillStyle = "rgba(0,0,0,.25)";
   g.fillRect(x - w / 2, y + 6, w, 3);
   g.fillStyle = p > 0.35 ? "#66bb6a" : "#e53935";
   g.fillRect(x - w / 2, y + 6, w * p, 3);
@@ -962,6 +1003,15 @@ const slot0c    = document.getElementById("slot0c");
 const slot1c    = document.getElementById("slot1c");
 const slot2c    = document.getElementById("slot2c");
 
+// Local save: each character keeps its own inventory on this device
+function invKey(role) { return `fermer_inv_${ROOM_ID}_${role}`; }
+function loadInv(role) {
+  try {
+    const raw = localStorage.getItem(invKey(role));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
 if (!configured) {
@@ -975,6 +1025,7 @@ if (!configured) {
   const cellsRef = roomRef.child("cells");
   const warehouseRef = roomRef.child("warehouse/wheat");
   const customersRef = roomRef.child("customers");
+  const fishingRef = roomRef.child("fishing");
   const g = canvas.getContext("2d");
   const bgCanvas = buildBackground();
 
@@ -986,13 +1037,18 @@ if (!configured) {
   let players = {};
   const remote = {};
   const seenA = {};
+  let fishStates = {};              // role -> fishing state of that player (from Firebase)
   let joining = false;
   let loopStarted = false;
   let statusMsg = "";
   let lastSent = 0, lastKey = "", lastHeartbeat = 0;
   let t = 0, lastFrame = performance.now();
+  let vx = 0, vy = 0;
+  let cam = { x: 0, y: 0 };
+  let camReady = false;
 
   let cells = {};
+  const appearAt = {};               // cell id -> time it first appeared (for pop-in)
   let customers = {};
   let lastSpawnAt = 0;
   let selectedId = null;
@@ -1002,14 +1058,21 @@ if (!configured) {
   let wheatStock = 0;
   let rodOwned = false;
   let selectedTool = null;
-  const fishInv = { carp: 0, pike: 0, bream: 0 };
+  let fishInv = { carp: 0, pike: 0, bream: 0 };
   let lastCam = { x: 0, y: 0, s: 1 };
 
-  // Local fishing state (times are server-synced ms). Mirrored to Firebase so others can see it.
   const fishing = { state: "idle", tx: 0, ty: 0, t0: 0, tb: 0, te: 0, type: "" };
 
   // ----- Activity (AFK) -----
   function touch() { if (me) me.lastAct = Date.now(); }
+
+  // ----- Save inventory locally (persists until browser data is cleared) -----
+  function saveInv() {
+    if (!me) return;
+    try {
+      localStorage.setItem(invKey(me.role), JSON.stringify({ coins, seeds, rodOwned, fishInv }));
+    } catch (e) {}
+  }
 
   // ----- Input: keyboard -----
   const keysDown = new Set();
@@ -1101,15 +1164,29 @@ if (!configured) {
       if (!isAlive(role)) continue;
       const p = players[role];
       if (!remote[role]) remote[role] = { x: p.x, y: p.y };
-      Object.assign(remote[role], {
-        role, tx: p.x, ty: p.y, f: p.f || 1, m: !!p.m, name: p.name, fish: p.fish || null
-      });
+      Object.assign(remote[role], { role, tx: p.x, ty: p.y, f: p.f || 1, m: !!p.m, name: p.name });
     }
+  }
+
+  // ----- Sync: fishing (separate node so every player sees it) -----
+  fishingRef.on("value", snap => { fishStates = snap.val() || {}; });
+
+  function fishSync() {
+    if (!me) return;
+    const ref = fishingRef.child(me.role);
+    if (fishing.state === "idle") { ref.set(null); return; }
+    ref.set({
+      state: fishing.state, tx: fishing.tx, ty: fishing.ty,
+      t0: fishing.t0 || 0, tb: fishing.tb || 0, te: fishing.te || 0,
+      type: fishing.type || ""
+    });
   }
 
   // ----- Sync: soil cells -----
   cellsRef.on("value", snap => {
     cells = snap.val() || {};
+    const now = performance.now();
+    for (const id of Object.keys(cells)) if (!appearAt[id]) appearAt[id] = now;
     if (selectedId && !cells[selectedId]) selectedId = null;
     updateShop();
   });
@@ -1181,8 +1258,9 @@ if (!configured) {
   // ----- Toast -----
   function showToast(text) {
     toastEl.textContent = text;
+    toastEl.style.opacity = "1";
     clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => { toastEl.textContent = ""; }, 3000);
+    showToast.timer = setTimeout(() => { toastEl.style.opacity = "0"; }, 3000);
   }
 
   // ----- Hotbar -----
@@ -1209,7 +1287,7 @@ if (!configured) {
     showToast(`Bal\u0131q: Sazan ${fishInv.carp}, Xan ${fishInv.pike}, G\u00FCm\u00FC\u015F ${fishInv.bream}`);
   });
 
-  // ----- Shop modal -----
+  // ----- Shop -----
   function openShop() { touch(); shopModal.classList.add("open"); updateShop(); }
   function closeShop() { shopModal.classList.remove("open"); }
   openBtn.addEventListener("click", openShop);
@@ -1227,6 +1305,7 @@ if (!configured) {
     buyRodBtn.textContent = rodOwned ? "Var" : "Al";
     fishListEl.textContent = `Bal\u0131qlar\u0131m: Sazan ${fishInv.carp} \u00B7 Xan ${fishInv.pike} \u00B7 G\u00FCm\u00FC\u015F ${fishInv.bream}`;
     updateHotbar();
+    saveInv();
   }
 
   // ----- Barn modal -----
@@ -1287,7 +1366,7 @@ if (!configured) {
     updateShop();
   });
 
-  // ----- Cell taps (plant / harvest) -----
+  // ----- Cell taps -----
   function handleTap(id) {
     const c = cells[id];
     if (!c) return;
@@ -1334,17 +1413,6 @@ if (!configured) {
     return "bream";
   }
 
-  function fishSync() {
-    if (!me) return;
-    const ref = playersRef.child(`${me.role}/fish`);
-    if (fishing.state === "idle") { ref.set(null); return; }
-    ref.set({
-      state: fishing.state, tx: fishing.tx, ty: fishing.ty,
-      t0: fishing.t0 || 0, tb: fishing.tb || 0, te: fishing.te || 0,
-      type: fishing.type || ""
-    });
-  }
-
   function fishClick(p) {
     if (!me) return;
     touch();
@@ -1375,7 +1443,7 @@ if (!configured) {
 
   function updateFishing(now) {
     if (!me || fishing.state === "idle") return;
-    touch();   // fishing is activity, so the player is not treated as AFK
+    touch();
     if (fishing.state === "cast" && now - fishing.t0 >= 500) {
       fishing.state = "wait";
       fishing.tb = now + 2000 + Math.random() * 3000;
@@ -1405,26 +1473,22 @@ if (!configured) {
     }
   }
 
-  // ----- Customers: leader spawns and cleans up; everyone can serve -----
+  // ----- Customers: leader spawns/cleans; anyone can serve -----
   function isLeader() {
     if (!me) return false;
     return me.role === "boy" || !isAlive("boy");
   }
 
   function spawnCustomer(now) {
-    const alive = Object.values(customers).filter(c => !c.served && now < c.spawn + CUST_WALK + CUST_PATIENCE);
+    const alive = Object.values(customers).filter(c => !c.served && now < c.spawn + (CUST_QUEUE_D[c.slot] / CUST_SPEED) * 1000 + CUST_PATIENCE);
     if (alive.length >= CUST_MAX) return;
     const used = new Set(alive.map(c => c.slot));
     let slot = -1;
     for (let i = 0; i < CUST_MAX; i++) if (!used.has(i)) { slot = i; break; }
     if (slot < 0) return;
     let item, qty;
-    const r = Math.random();
-    if (r < 0.6) { item = "wheat"; qty = 1 + Math.floor(Math.random() * 3); }
-    else {
-      item = pickFish();
-      qty = 1;
-    }
+    if (Math.random() < 0.6) { item = "wheat"; qty = 1 + Math.floor(Math.random() * 3); }
+    else { item = pickFish(); qty = 1; }
     customersRef.push({ item, qty, slot, spawn: now, served: 0 });
   }
 
@@ -1433,8 +1497,9 @@ if (!configured) {
     const now = serverNow();
     for (const id of Object.keys(customers)) {
       const c = customers[id];
-      const deadline = c.spawn + CUST_WALK + CUST_PATIENCE;
-      if ((c.served && now - c.served > CUST_WALK + 500) || (!c.served && now > deadline + CUST_WALK + 500)) {
+      const walk = (CUST_QUEUE_D[c.slot] / CUST_SPEED) * 1000;
+      const deadline = c.spawn + walk + CUST_PATIENCE;
+      if ((c.served && now - c.served > walk + 500) || (!c.served && now > deadline + walk + 500)) {
         customersRef.child(id).remove();
       }
     }
@@ -1451,7 +1516,7 @@ if (!configured) {
     if (c.item === "wheat") {
       warehouseRef.transaction(n => {
         n = n || 0;
-        if (n < c.qty) return;      // not enough wheat: abort
+        if (n < c.qty) return;
         return n - c.qty;
       }).then(res => {
         if (!res.committed) { showToast("Ambarda yetərli bu\u011Fda yoxdur."); return; }
@@ -1476,15 +1541,14 @@ if (!configured) {
 
   function hitCustomer(wx, wy, now) {
     for (const id of Object.keys(customers)) {
-      const c = customers[id];
-      const st = custState(c, now);
+      const st = custState(customers[id], now);
       if (st.gone || st.mode !== "wait") continue;
       if (Math.hypot(wx - st.x, wy - (st.y - 6)) < 26) return id;
     }
     return null;
   }
 
-  // ----- Canvas pointer: cells, barn, customers, fishing -----
+  // ----- Canvas pointer -----
   function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left - canvas.clientLeft;
@@ -1522,7 +1586,6 @@ if (!configured) {
     const p = toWorld(e);
     if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 6) drag.moved = true;
     if (!drag.moved) return;
-
     const cand = { x: snapCell(p.x - drag.ox), y: snapCell(p.y - drag.oy), w: CELL, h: CELL };
     if (cellFree(cand, drag.id)) {
       drag.x = cand.x;
@@ -1563,7 +1626,7 @@ if (!configured) {
   function heartbeat(now) {
     if (!me) return;
     if (now - lastHeartbeat < HEARTBEAT_MS) return;
-    if (Date.now() - me.lastAct > IDLE_MS) return;   // truly idle: let the timer run out
+    if (Date.now() - me.lastAct > IDLE_MS) return;
     lastHeartbeat = now;
     playersRef.child(me.role).update({ a: Date.now() });
   }
@@ -1591,15 +1654,18 @@ if (!configured) {
 
   function kickSelf(msg) {
     if (!me) return;
+    saveInv();
     const role = me.role;
     fishing.state = "idle";
     fishSync();
     playersRef.child(role).onDisconnect().cancel();
+    fishingRef.child(role).onDisconnect().cancel();
     playersRef.child(role).remove();
     me = null;
     lastKey = "";
     drag = null;
     selectedId = null;
+    camReady = false;
     closeShop();
     closeBarnModal();
     Object.keys(remote).forEach(k => delete remote[k]);
@@ -1637,10 +1703,25 @@ if (!configured) {
       return;
     }
 
+    // restore this character's saved inventory from this device
+    const saved = loadInv(role);
+    coins = saved && typeof saved.coins === "number" ? saved.coins : START_COINS;
+    seeds = saved && saved.seeds ? saved.seeds : 0;
+    rodOwned = !!(saved && saved.rodOwned);
+    fishInv = {
+      carp: saved && saved.fishInv ? saved.fishInv.carp || 0 : 0,
+      pike: saved && saved.fishInv ? saved.fishInv.pike || 0 : 0,
+      bream: saved && saved.fishInv ? saved.fishInv.bream || 0 : 0
+    };
+    selectedTool = rodOwned ? null : null;
+
     me = { role, x: start.x, y: start.y, f: 1, m: false, lastAct: Date.now() };
+    vx = 0; vy = 0;
+    camReady = false;
     lastKey = "";
     statusMsg = "";
     slotRef.onDisconnect().remove();
+    fishingRef.child(role).onDisconnect().remove();
 
     selectEl.style.display = "none";
     gameEl.style.display = "flex";
@@ -1681,14 +1762,19 @@ if (!configured) {
 
     if (me) {
       const d = inputVec();
-      me.m = !!(d.x || d.y);
+      // eased velocity: slides in and out instead of snapping
+      const tvx = d.x * SPEED, tvy = d.y * SPEED;
+      vx += (tvx - vx) * Math.min(1, dt * ACCEL);
+      vy += (tvy - vy) * Math.min(1, dt * ACCEL);
+      const speed = Math.hypot(vx, vy);
+      me.m = speed > 6;
       if (me.m) {
         touch();
-        const nx = me.x + d.x * SPEED * dt;
-        const ny = me.y + d.y * SPEED * dt;
-        if (!blocked(nx, me.y)) me.x = nx;
-        if (!blocked(me.x, ny)) me.y = ny;
-        if (Math.abs(d.x) > 0.2) me.f = d.x < 0 ? -1 : 1;
+        const nx = me.x + vx * dt;
+        const ny = me.y + vy * dt;
+        if (!blocked(nx, me.y)) me.x = nx; else vx = 0;
+        if (!blocked(me.x, ny)) me.y = ny; else vy = 0;
+        if (Math.abs(vx) > 8) me.f = vx < 0 ? -1 : 1;
       }
       sendState(now);
       heartbeat(now);
@@ -1698,16 +1784,16 @@ if (!configured) {
 
     for (const k in remote) {
       const r = remote[k];
-      const a = Math.min(1, dt * 12);
+      const a = Math.min(1, dt * 10);
       r.x += (r.tx - r.x) * a;
       r.y += (r.ty - r.y) * a;
     }
 
-    if (me) render(t);
+    if (me) render(t, dt);
     requestAnimationFrame(loop);
   }
 
-  function render(time) {
+  function render(time, dt) {
     const cw = canvas.clientWidth, ch = canvas.clientHeight;
     const dpr = window.devicePixelRatio || 1;
     const bw = Math.round(cw * dpr), bh = Math.round(ch * dpr);
@@ -1718,32 +1804,41 @@ if (!configured) {
 
     const s = cw / VW;
     const vh = ch / s;
-    const camX = clamp(me.x - VW / 2, 0, W - VW);
-    const camY = clamp(me.y - vh / 2, 0, H - vh);
+    const tcx = clamp(me.x - VW / 2, 0, W - VW);
+    const tcy = clamp(me.y - vh / 2, 0, H - vh);
+    if (!camReady) { cam.x = tcx; cam.y = tcy; camReady = true; }
+    cam.x += (tcx - cam.x) * Math.min(1, dt * CAM_EASE);
+    cam.y += (tcy - cam.y) * Math.min(1, dt * CAM_EASE);
+    const camX = cam.x, camY = cam.y;
     lastCam = { x: camX, y: camY, s };
 
     g.setTransform(dpr * s, 0, 0, dpr * s, -camX * dpr * s, -camY * dpr * s);
-    g.fillStyle = "#6fae3c";
+    g.fillStyle = "#7cb94a";
     g.fillRect(camX, camY, VW, vh);
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWater(g, time);
 
     const now = serverNow();
+    const perf = performance.now();
     const ids = Object.keys(cells);
+    const scaleOf = id => {
+      const a = appearAt[id] ? (perf - appearAt[id]) / 260 : 1;
+      return 0.85 + 0.15 * easeOut(clamp(a, 0, 1));
+    };
     ids.forEach(id => {
       const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y } : cells[id];
       drawCellShadow(g, c);
     });
     ids.forEach(id => {
       const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, crop: cells[id].crop } : cells[id];
-      drawCell(g, c, id === selectedId, now);
+      drawCell(g, c, id === selectedId, now, scaleOf(id));
     });
     ids.forEach(id => {
       const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, crop: cells[id].crop } : cells[id];
       drawCellLabel(g, c, now);
     });
 
-    // everything that stands on the ground, sorted by bottom edge
+    // ground objects, sorted by bottom edge
     const things = [];
     things.push({ y: BARN.y + BARN.h, draw: () => drawBarn(g) });
 
@@ -1760,18 +1855,20 @@ if (!configured) {
       if (st.gone) continue;
       things.push({
         y: st.y,
-        draw: () => drawNpc(g, st.x, st.y, st.mode, c, now, time, st)
+        draw: () => drawNpc(g, st.x, st.y, st.f, st.mode, c, now, time, st)
       });
     }
 
     things.sort((a, b) => a.y - b.y);
     things.forEach(th => th.draw());
 
-    // fishing: own line, plus everyone else's, visible to all players
+    // fishing: own line, and every other player's line from Firebase
     drawFishingFor(g, { x: me.x, y: me.y, f: me.f }, fishing, now, time, selectedTool === "rod");
-    for (const k in remote) {
-      const r = remote[k];
-      if (r.fish) drawFishingFor(g, { x: r.x, y: r.y, f: r.f }, r.fish, now, time, false);
+    for (const role of Object.keys(fishStates)) {
+      if (me && role === me.role) continue;
+      const r = remote[role];
+      if (!r) continue;
+      drawFishingFor(g, { x: r.x, y: r.y, f: r.f }, fishStates[role], now, time, false);
     }
   }
 }
