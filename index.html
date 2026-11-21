@@ -33,10 +33,15 @@
   .choice:disabled { background: #aaa; cursor: not-allowed; }
   #status { font-size: .95rem; color: #333; text-align: center; min-height: 1.2em; }
 
-  #game { display: none; flex-direction: row; align-items: flex-start; gap: 12px; }
-  #left { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  #info { color: #fff; font-weight: bold; text-shadow: 0 1px 3px #000; text-align: center; min-height: 1.2em; font-size: .95rem; }
-  #hint { color: #fff; font-size: .85rem; text-shadow: 0 1px 3px #000; text-align: center; }
+  #game { display: none; flex-direction: column; align-items: center; gap: 6px; }
+  #topbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    color: #fff; text-shadow: 0 1px 3px #000; font-size: .9rem; font-weight: bold;
+    width: 100%;
+  }
+  #info { flex: 1; min-height: 1.2em; }
+  #topbar .right { display: flex; align-items: center; gap: 8px; }
+  #hint { color: #fff; font-size: .8rem; text-shadow: 0 1px 3px #000; text-align: center; }
   #world {
     display: block;
     border: 4px solid #5d4037;
@@ -44,6 +49,16 @@
     box-shadow: 0 6px 18px rgba(0,0,0,.25);
     touch-action: none;
   }
+  #bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 36px; }
+  #toast { color: #fff; font-size: .85rem; text-shadow: 0 1px 3px #000; text-align: right; flex: 1; }
+
+  .btn {
+    border: none; border-radius: 8px; background: #4caf50; color: #fff;
+    padding: 8px 12px; font-size: .9rem; cursor: pointer;
+  }
+  .btn.small { padding: 6px 10px; font-size: .85rem; }
+  .btn.danger { background: #e53935; }
+  .btn:disabled { background: #bbb; cursor: not-allowed; }
 
   #joy {
     display: none;
@@ -54,7 +69,7 @@
     background: rgba(255,255,255,.35);
     border: 3px solid rgba(0,0,0,.25);
     touch-action: none;
-    margin-top: 4px;
+    margin-top: 2px;
   }
   @media (pointer: coarse) {
     #joy { display: block; }
@@ -67,39 +82,46 @@
     transform: translate(-50%, -50%); pointer-events: none;
   }
 
-  /* Shop */
-  #shop {
-    width: 128px;
+  /* Shop modal */
+  #shopModal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    align-items: center; justify-content: center;
+    z-index: 10;
+    padding: 12px;
+  }
+  #shopModal.open { display: flex; }
+  .card {
     background: #fff8e1;
     border: 3px solid #8d6e63;
-    border-radius: 12px;
-    padding: 10px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25);
-    font-size: .85rem;
+    border-radius: 14px;
+    padding: 16px;
+    width: min(92vw, 340px);
+    display: flex; flex-direction: column; gap: 12px;
     color: #3e2723;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
   }
-  #shop h2 { font-size: 1rem; text-align: center; }
-  #coins { font-weight: bold; text-align: center; }
-  .item {
-    background: #fff; border-radius: 10px; padding: 8px 6px;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  .card .head { display: flex; justify-content: space-between; align-items: center; }
+  .card h2 { font-size: 1.1rem; }
+  #coinsModal { font-weight: bold; }
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border-radius: 10px; padding: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,.12);
   }
+  .row .grow { flex: 1; font-size: .9rem; }
+  .row .grow small { color: #6d4c41; }
   .icon.soil {
-    width: 56px; height: 38px; border-radius: 6px; border: 2px solid #6b4a2b;
+    width: 52px; height: 36px; border-radius: 6px; border: 2px solid #6b4a2b;
     background: repeating-linear-gradient(0deg, #8d6a46 0 10px, #6b4a2b 10px 13px);
+    flex-shrink: 0;
   }
-  .btn {
-    width: 100%; padding: 7px; border: none; border-radius: 8px;
-    background: #4caf50; color: #fff; font-size: .9rem; cursor: pointer;
+  .icon.seed {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #a1887f 34% 100%);
+    border: 2px solid #6d4c41;
   }
-  .btn:disabled { background: #bbb; cursor: not-allowed; }
-  .btn.danger { background: #e53935; }
-  #shopMsg { min-height: 2.2em; text-align: center; font-size: .8rem; color: #b71c1c; }
-  #sel { text-align: center; font-size: .85rem; }
 </style>
 </head>
 <body>
@@ -112,26 +134,49 @@
 </div>
 
 <div id="game">
-  <div id="left">
+  <div id="topbar">
     <div id="info"></div>
-    <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri. Torpa&#287;&#305; se&ccedil;ib s&#252;r&#252;&#351;d&#252;r&#252;n.</div>
-    <canvas id="world"></canvas>
-    <div id="joy"><div id="knob"></div></div>
+    <div class="right">
+      <span id="coins"></span>
+      <button class="btn small" id="openShop">Ma&#287;aza</button>
+    </div>
   </div>
+  <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri. Torpa&#287;a toxunub toxum &#601;kin, yeti&#351;&#601;nd&#601; yenid&#601;n toxunub yi&#287;&#305;n.</div>
+  <canvas id="world"></canvas>
+  <div id="bottom">
+    <div id="toast"></div>
+    <button class="btn danger small" id="del-plot" disabled>Sil (+25 pul)</button>
+  </div>
+  <div id="joy"><div id="knob"></div></div>
+</div>
 
-  <aside id="shop">
-    <h2>Ma&#287;aza</h2>
-    <div id="coins"></div>
-    <div class="item">
+<!-- Shop modal -->
+<div id="shopModal">
+  <div class="card">
+    <div class="head">
+      <h2>Ma&#287;aza</h2>
+      <button class="btn small" id="closeShop">Ba&#287;la</button>
+    </div>
+    <div id="coinsModal">Pul: 0</div>
+
+    <div class="row">
       <div class="icon soil"></div>
-      <div>Torpaq</div>
-      <div>50 pul</div>
+      <div class="grow">
+        <b>Torpaq</b><br>
+        <small>50 pul &middot; yeni sah&#601; &#601;lav&#601; edir</small>
+      </div>
       <button class="btn" id="buy-soil">Al</button>
     </div>
-    <div id="sel">Se&ccedil;im yoxdur</div>
-    <button class="btn danger" id="del-plot" disabled>Sil (+25 pul)</button>
-    <div id="shopMsg"></div>
-  </aside>
+
+    <div class="row">
+      <div class="icon seed"></div>
+      <div class="grow">
+        <b>Bu&#287;da toxumu</b><br>
+        <small>10 pul &middot; siz&#601;: <span id="seedCount">0</span></small>
+      </div>
+      <button class="btn" id="buy-seed">Al</button>
+    </div>
+  </div>
 </div>
 
 <!-- Firebase (compat) -->
@@ -159,6 +204,9 @@ const R = 12;                 // player collision radius
 const SEND_MS = 100;          // network throttle
 const IDLE_MS = 20000;        // remove character after this much inactivity
 const SOIL = { w: 160, h: 100, price: 50, refund: 25 };
+const SEED_PRICE = 10;
+const HARVEST_PRICE = 25;
+const GROW_MS = 30000;        // wheat growth time (30 s)
 const START_COINS = 300;
 
 const CHARS = {
@@ -170,7 +218,7 @@ const CHARS = {
 const LAKE = { cx: 120, cy: 480, rx: 125, ry: 80 };
 const FALL = { x0: 62, x1: 124, y0: 150, y1: 402 };
 
-// Dirt path (used for drawing and to keep trees off it)
+// Dirt path
 const PATH = [[300, 1000], [420, 760], [700, 640], [900, 560], [1150, 600], [1400, 780], [1600, 800]];
 
 function pathSamples() {
@@ -184,14 +232,18 @@ function pathSamples() {
 }
 const PATH_PTS = pathSamples();
 
-// Trees: generated once, same for everyone
+function rng(seed) {
+  let s = seed;
+  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+}
+
 function genTrees() {
   const r = rng(7);
   const list = [];
   for (let i = 0; i < 90; i++) {
     const x = 40 + r() * (W - 80), y = 40 + r() * (H - 80);
-    if (x < 240 && y < 700) continue;                      // lake and cliff area
-    if (Math.hypot(x - 760, y - 460) < 170) continue;      // around the starter plot
+    if (x < 240 && y < 700) continue;
+    if (Math.hypot(x - 760, y - 460) < 170) continue;
     if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 55)) continue;
     list.push([x, y]);
   }
@@ -201,9 +253,9 @@ const TREES = genTrees();
 
 // Collision obstacles
 const OBST = [
-  { t: "rect", x: 0, y: 0, w: 165, h: 150 },                                        // cliff
-  { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 }, // waterfall
-  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry }                   // lake
+  { t: "rect", x: 0, y: 0, w: 165, h: 150 },
+  { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 },
+  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry }
 ];
 TREES.forEach(([x, y]) => OBST.push({ t: "circ", x, y, r: 12 }));
 
@@ -225,10 +277,6 @@ function blocked(x, y) {
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 // ---------- Drawing helpers ----------
-function rng(seed) {
-  let s = seed;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-}
 function circ(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
 function rr(g, x, y, w, h, r) {
   g.beginPath();
@@ -264,14 +312,12 @@ function buildBackground() {
   const g = c.getContext("2d");
   const rnd = rng(42);
 
-  // grass
   const gg = g.createLinearGradient(0, 0, 0, H);
   gg.addColorStop(0, "#a5d86b");
   gg.addColorStop(1, "#6fae3c");
   g.fillStyle = gg;
   g.fillRect(0, 0, W, H);
 
-  // light patches and grass strokes
   for (let i = 0; i < 90; i++) {
     g.fillStyle = "rgba(255,255,200,.06)";
     g.beginPath();
@@ -289,11 +335,9 @@ function buildBackground() {
     g.stroke();
   }
 
-  // dirt path
   strokeSmooth(g, PATH, 58, "#a9794a");
   strokeSmooth(g, PATH, 46, "#c99a60");
 
-  // flowers
   const flowers = ["#fff176", "#f48fb1", "#ffffff", "#ce93d8", "#ffab91"];
   for (let i = 0; i < 400; i++) {
     const x = rnd() * W, y = rnd() * H;
@@ -303,7 +347,6 @@ function buildBackground() {
     circ(g, x, y, 2.2);
   }
 
-  // rocks around the lake
   [[70, 560, 14], [200, 560, 11], [250, 470, 10], [40, 420, 9], [210, 405, 8]].forEach(([x, y, r]) => {
     g.fillStyle = "#8a8f96";
     g.beginPath(); g.ellipse(x, y, r, r * 0.75, 0, 0, Math.PI * 2); g.fill();
@@ -311,7 +354,6 @@ function buildBackground() {
     g.beginPath(); g.ellipse(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.25, 0, 0, Math.PI * 2); g.fill();
   });
 
-  // cliff (top-left)
   const cg = g.createLinearGradient(0, 0, 0, 150);
   cg.addColorStop(0, "#6d6259");
   cg.addColorStop(1, "#8b7d70");
@@ -326,7 +368,6 @@ function buildBackground() {
   g.fillStyle = "#4f463f";
   g.fillRect(0, 140, 165, 10);
 
-  // lake
   const lg = g.createRadialGradient(100, 465, 20, LAKE.cx, LAKE.cy, 130);
   lg.addColorStop(0, "#4fc3f7");
   lg.addColorStop(1, "#0277bd");
@@ -336,7 +377,6 @@ function buildBackground() {
   g.lineWidth = 3;
   g.beginPath(); g.ellipse(LAKE.cx, LAKE.cy, LAKE.rx + 1, LAKE.ry + 1, 0, 0, Math.PI * 2); g.stroke();
 
-  // trees
   TREES.forEach(([x, y]) => {
     g.fillStyle = "rgba(0,0,0,.2)";
     g.beginPath(); g.ellipse(x, y + 2, 18, 7, 0, 0, Math.PI * 2); g.fill();
@@ -350,7 +390,6 @@ function buildBackground() {
   return c;
 }
 
-// Animated waterfall and lake (drawn every frame)
 function drawWaterfall(g, t) {
   const { x0, x1, y0, y1 } = FALL;
   const wg = g.createLinearGradient(x0, 0, x1, 0);
@@ -398,14 +437,17 @@ function drawWaterfall(g, t) {
   g.restore();
 }
 
-// Soil plot
-function drawPlot(g, r, selected) {
+// Soil plot with optional wheat
+function drawPlot(g, r, selected, now) {
   g.fillStyle = "#6b4a2b";
   rr(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 8);
   g.fillStyle = "#8d6a46";
   rr(g, r.x, r.y, r.w, r.h, 6);
   g.fillStyle = "#6b4a2b";
   for (let y = r.y + 12; y < r.y + r.h - 6; y += 18) g.fillRect(r.x + 8, y, r.w - 16, 6);
+
+  if (r.crop) drawWheat(g, r, now);
+
   if (selected) {
     g.strokeStyle = "#ffeb3b";
     g.lineWidth = 3;
@@ -415,7 +457,47 @@ function drawPlot(g, r, selected) {
   }
 }
 
-// Character drawn with code (no emoji)
+function cropProgress(r, now) {
+  if (!r.crop) return 0;
+  return clamp((now - r.crop.t) / GROW_MS, 0, 1);
+}
+
+function drawWheat(g, r, now) {
+  const p = cropProgress(r, now);
+  const cols = 10;
+  for (let i = 0; i < cols; i++) {
+    const cx = r.x + 14 + i * ((r.w - 28) / (cols - 1));
+    for (let j = 0; j < 2; j++) {
+      const bx = cx + (j ? 5 : -5);
+      const base = r.y + r.h - 8 - j * 9;
+      const hgt = 6 + p * 34;
+      const color = p < 0.5 ? "#7cb342" : (p < 1 ? "#c0ca33" : "#f9a825");
+      g.strokeStyle = color;
+      g.lineWidth = 2.2;
+      g.beginPath();
+      g.moveTo(bx, base);
+      g.lineTo(bx + (j ? 1 : -1), base - hgt);
+      g.stroke();
+      if (p >= 1) {
+        g.fillStyle = "#fbc02d";
+        circ(g, bx + (j ? 1 : -1), base - hgt - 2.5, 2.8);
+      }
+    }
+  }
+
+  // Status label above the plot
+  const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
+  g.font = "bold 10px system-ui, sans-serif";
+  const w = g.measureText(label).width + 10;
+  g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.55)";
+  rr(g, r.x + r.w / 2 - w / 2, r.y - 18, w, 13, 5);
+  g.fillStyle = "#ffffff";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(label, r.x + r.w / 2, r.y - 11.5);
+}
+
+// Character drawn with code
 function drawChar(g, p, t, label) {
   const x = p.x, f = p.f || 1, moving = !!p.m;
   const isBoy = p.role === "boy";
@@ -515,19 +597,24 @@ function drawChar(g, p, t, label) {
 }
 
 // ---------- App ----------
-const statusEl = document.getElementById("status");
-const selectEl = document.getElementById("select");
-const gameEl   = document.getElementById("game");
-const infoEl   = document.getElementById("info");
-const canvas   = document.getElementById("world");
-const joyEl    = document.getElementById("joy");
-const knobEl   = document.getElementById("knob");
-const buttons  = document.querySelectorAll(".choice");
-const coinsEl  = document.getElementById("coins");
-const selEl    = document.getElementById("sel");
-const buyBtn   = document.getElementById("buy-soil");
-const delBtn   = document.getElementById("del-plot");
-const shopMsg  = document.getElementById("shopMsg");
+const statusEl  = document.getElementById("status");
+const selectEl  = document.getElementById("select");
+const gameEl    = document.getElementById("game");
+const infoEl    = document.getElementById("info");
+const canvas    = document.getElementById("world");
+const joyEl     = document.getElementById("joy");
+const knobEl    = document.getElementById("knob");
+const buttons   = document.querySelectorAll(".choice");
+const coinsEl   = document.getElementById("coins");
+const openBtn   = document.getElementById("openShop");
+const shopModal = document.getElementById("shopModal");
+const closeBtn  = document.getElementById("closeShop");
+const coinsModal= document.getElementById("coinsModal");
+const seedCount = document.getElementById("seedCount");
+const buySoilBtn= document.getElementById("buy-soil");
+const buySeedBtn= document.getElementById("buy-seed");
+const delBtn    = document.getElementById("del-plot");
+const toastEl   = document.getElementById("toast");
 
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
@@ -543,6 +630,11 @@ if (!configured) {
   const g = canvas.getContext("2d");
   const bgCanvas = buildBackground();
 
+  // Server time offset, so growth timers agree across phones
+  let serverOffset = 0;
+  db.ref(".info/serverTimeOffset").on("value", s => { serverOffset = s.val() || 0; });
+  const serverNow = () => Date.now() + serverOffset;
+
   let me = null;
   let players = {};
   const remote = {};
@@ -553,10 +645,11 @@ if (!configured) {
   let lastSent = 0, lastKey = "";
   let t = 0, lastFrame = performance.now();
 
-  let plots = {};            // id -> {x,y,w,h} from Firebase
+  let plots = {};
   let selectedId = null;
-  let drag = null;           // {id, ox, oy, x, y, lastSent}
+  let drag = null;           // {id, ox, oy, x, y, sx, sy, moved, lastSent}
   let coins = START_COINS;
+  let seeds = 0;
   let lastCam = { x: 0, y: 0, s: 1 };
 
   // ----- Input: keyboard -----
@@ -569,7 +662,7 @@ if (!configured) {
   };
   document.addEventListener("keydown", e => {
     const k = e.key.toLowerCase();
-    if (KEYS[k]) { e.preventDefault(); keysDown.add(k); }
+    if (KEYS[k] && !shopModal.classList.contains("open")) { e.preventDefault(); keysDown.add(k); }
   });
   document.addEventListener("keyup", e => keysDown.delete(e.key.toLowerCase()));
   window.addEventListener("blur", () => { keysDown.clear(); joy = { x: 0, y: 0 }; });
@@ -619,7 +712,7 @@ if (!configured) {
     return !!players[role] && !isStale(role);
   }
 
-  // ----- Real-time sync: players -----
+  // ----- Sync: players -----
   playersRef.on("value", snap => {
     const data = snap.val() || {};
     const now = Date.now();
@@ -647,14 +740,13 @@ if (!configured) {
     }
   }
 
-  // ----- Real-time sync: plots -----
+  // ----- Sync: plots -----
   plotsRef.on("value", snap => {
     plots = snap.val() || {};
     if (selectedId && !plots[selectedId]) selectedId = null;
     updateShop();
   });
 
-  // Starter plot in the centre, created only once for the whole room
   roomRef.child("meta/starterPlaced").transaction(cur => {
     if (cur) return;
     return true;
@@ -720,29 +812,48 @@ if (!configured) {
     return null;
   }
 
-  // ----- Shop -----
-  function showShopMsg(text) {
-    shopMsg.textContent = text;
-    clearTimeout(showShopMsg.timer);
-    showShopMsg.timer = setTimeout(() => { shopMsg.textContent = ""; }, 2500);
-  }
-  function updateShop() {
-    coinsEl.textContent = `Pul: ${coins}`;
-    const sel = selectedId && plots[selectedId];
-    selEl.textContent = sel ? "Se\u00E7ilmi\u015F torpaq" : "Se\u00E7im yoxdur";
-    delBtn.disabled = !sel;
-    buyBtn.disabled = !me;
+  // ----- Toast message -----
+  function showToast(text) {
+    toastEl.textContent = text;
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => { toastEl.textContent = ""; }, 2500);
   }
 
-  buyBtn.addEventListener("click", () => {
+  // ----- Shop modal -----
+  function openShop() { shopModal.classList.add("open"); updateShop(); }
+  function closeShop() { shopModal.classList.remove("open"); }
+  openBtn.addEventListener("click", openShop);
+  closeBtn.addEventListener("click", closeShop);
+  shopModal.addEventListener("click", e => { if (e.target === shopModal) closeShop(); });
+
+  function updateShop() {
+    coinsEl.textContent = `Pul: ${coins}`;
+    coinsModal.textContent = `Pul: ${coins}`;
+    seedCount.textContent = seeds;
+    delBtn.disabled = !(selectedId && plots[selectedId]);
+    buySoilBtn.disabled = !me;
+    buySeedBtn.disabled = !me;
+  }
+
+  buySoilBtn.addEventListener("click", () => {
     if (!me) return;
-    if (coins < SOIL.price) { showShopMsg("Pulunuz \u00E7atm\u0131r."); return; }
+    if (coins < SOIL.price) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
     const spot = findFreeSpot(me.x, me.y - 60);
-    if (!spot) { showShopMsg("Yerl\u0259\u015Fdirm\u0259k \u00FC\u00E7\u00FCn yer tap\u0131lmad\u0131."); return; }
+    if (!spot) { showToast("Yerl\u0259\u015Fdirm\u0259k \u00FC\u00E7\u00FCn yer tap\u0131lmad\u0131."); return; }
     coins -= SOIL.price;
     const ref = plotsRef.push(spot);
     selectedId = ref.key;
     updateShop();
+    showToast("Torpaq al\u0131nd\u0131. Yeni sah\u0259 \u0259lav\u0259 olundu.");
+  });
+
+  buySeedBtn.addEventListener("click", () => {
+    if (!me) return;
+    if (coins < SEED_PRICE) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
+    coins -= SEED_PRICE;
+    seeds += 1;
+    updateShop();
+    showToast("Bu\u011Fda toxumu al\u0131nd\u0131.");
   });
 
   delBtn.addEventListener("click", () => {
@@ -753,7 +864,33 @@ if (!configured) {
     updateShop();
   });
 
-  // ----- Canvas pointer: select and drag plots -----
+  // ----- Tap actions on plots -----
+  function handleTap(id) {
+    const r = plots[id];
+    if (!r) return;
+    if (r.crop) {
+      const p = cropProgress(r, serverNow());
+      if (p >= 1) {
+        plotsRef.child(id).child("crop").remove();
+        coins += HARVEST_PRICE;
+        showToast(`M\u0259hsul y\u0131\u011F\u0131ld\u0131 +${HARVEST_PRICE} pul`);
+        updateShop();
+      } else {
+        showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * GROW_MS / 1000)} s`);
+      }
+      return;
+    }
+    if (seeds > 0) {
+      seeds -= 1;
+      plotsRef.child(id).update({ crop: { k: "wheat", t: serverNow() } });
+      showToast("Toxum \u0259kildi.");
+      updateShop();
+    } else {
+      showToast("Toxum yoxdur, ma\u011Fazadan al\u0131n.");
+    }
+  }
+
+  // ----- Canvas pointer: select, drag, tap -----
   function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left - canvas.clientLeft;
@@ -768,7 +905,7 @@ if (!configured) {
     if (id) {
       selectedId = id;
       const r = plots[id];
-      drag = { id, ox: p.x - r.x, oy: p.y - r.y, x: r.x, y: r.y, lastSent: 0 };
+      drag = { id, ox: p.x - r.x, oy: p.y - r.y, x: r.x, y: r.y, sx: p.x, sy: p.y, moved: false, lastSent: 0 };
       canvas.setPointerCapture(e.pointerId);
     } else {
       selectedId = null;
@@ -781,6 +918,8 @@ if (!configured) {
     const r = plots[drag.id];
     if (!r) { drag = null; return; }
     const p = toWorld(e);
+    if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 6) drag.moved = true;
+    if (!drag.moved) return;
     const nx = clamp(p.x - drag.ox, 0, W - r.w);
     const ny = clamp(p.y - drag.oy, 0, H - r.h);
     if (!overlapsAny({ x: nx, y: ny, w: r.w, h: r.h }, drag.id)) {
@@ -796,14 +935,16 @@ if (!configured) {
 
   function endDrag() {
     if (!drag) return;
-    const r = plots[drag.id];
-    if (r) {
-      const snapped = snapRect({ x: drag.x, y: drag.y, w: r.w, h: r.h }, drag.id);
-      const ok = !overlapsAny(snapped, drag.id);
-      const fin = ok ? { x: snapped.x, y: snapped.y } : { x: drag.x, y: drag.y };
-      plotsRef.child(drag.id).update(fin);
-    }
+    const d = drag;
     drag = null;
+    if (!d.moved) { handleTap(d.id); return; }
+    const r = plots[d.id];
+    if (r) {
+      const snapped = snapRect({ x: d.x, y: d.y, w: r.w, h: r.h }, d.id);
+      const ok = !overlapsAny(snapped, d.id);
+      const fin = ok ? { x: snapped.x, y: snapped.y } : { x: d.x, y: d.y };
+      plotsRef.child(d.id).update(fin);
+    }
   }
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
@@ -849,6 +990,7 @@ if (!configured) {
     lastKey = "";
     drag = null;
     selectedId = null;
+    closeShop();
     Object.keys(remote).forEach(k => delete remote[k]);
     statusMsg = msg;
     gameEl.style.display = "none";
@@ -910,13 +1052,13 @@ if (!configured) {
       (waiting ? " \u2014 dig\u0259r oyun\u00E7u g\u00F6zl\u0259nilir..." : "");
   }
 
-  // ----- Canvas sizing -----
+  // ----- Canvas sizing: full width -----
   function resizeCanvas() {
-    const shopW = document.getElementById("shop").offsetWidth || 128;
-    const cw = Math.max(200, Math.min(window.innerWidth - shopW - 48, 760));
-    const ch = Math.round(Math.min(cw * 0.75, window.innerHeight * 0.7));
+    const cw = Math.max(220, Math.min(window.innerWidth - 24, 760));
+    const ch = Math.round(Math.min(cw * 0.66, window.innerHeight * 0.6));
     canvas.style.width = cw + "px";
     canvas.style.height = ch + "px";
+    gameEl.style.width = cw + "px";
   }
   window.addEventListener("resize", resizeCanvas);
 
@@ -972,9 +1114,10 @@ if (!configured) {
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWaterfall(g, time);
 
+    const now = serverNow();
     for (const id in plots) {
-      const r = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: plots[id].w, h: plots[id].h } : plots[id];
-      drawPlot(g, r, id === selectedId);
+      const r = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: plots[id].w, h: plots[id].h, crop: plots[id].crop } : plots[id];
+      drawPlot(g, r, id === selectedId, now);
     }
 
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
