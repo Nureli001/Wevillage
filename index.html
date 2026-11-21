@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fermer Oyunu</title>
+<title>WeVillage</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -36,6 +36,7 @@
   #status { font-size: .95rem; color: #5d4037; text-align: center; min-height: 1.2em; }
 
   /* Menu scene: farm drawings around the card */
+  #menuBg { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; display: none; pointer-events: none; }
   #menuDeco {
     position: fixed; inset: 0; width: 100%; height: 100%;
     z-index: 0; pointer-events: none;
@@ -57,6 +58,11 @@
   #info { flex: 1; min-height: 1.2em; }
   #topbar .right { display: flex; align-items: center; gap: 8px; }
   #clock { background: rgba(255,255,255,.22); border-radius: 10px; padding: 3px 8px; font-size: .8rem; }
+  #orders {
+    width: 100%; color: #fff; font-size: .8rem; text-align: center;
+    background: rgba(40,60,30,.35); border-radius: 12px; padding: 5px 10px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.5); min-height: 1.6em;
+  }
   #hint { color: #fff; font-size: .8rem; text-shadow: 0 1px 3px rgba(0,0,0,.6); text-align: center; }
   #world {
     display: block;
@@ -179,19 +185,22 @@
     padding: 14px 26px 18px; box-shadow: 0 6px 0 #5a3a1c, 0 10px 20px rgba(0,0,0,.25);
   }
   .boardText {
-    font-size: 2.2rem; font-weight: 900; letter-spacing: 2px; color: #fff;
-    text-shadow: 0 3px 0 #5a3a1c; text-align: center;
+    font-size: 2.6rem; font-weight: 900; letter-spacing: 1px; color: #fff;
+    text-shadow: 0 3px 0 #5a3a1c, 0 0 2px #5a3a1c; text-align: center; line-height: 1.1;
   }
-  .boardText span { color: #ffd54f; }
+  .boardText span { color: #ffc107; }
   .menuBtn {
-    width: 240px; padding: 14px; border: none; border-radius: 18px;
-    font-size: 1.15rem; font-weight: 800; color: #fff; cursor: pointer;
+    width: 250px; padding: 12px; border: none; border-radius: 22px;
+    font-size: 1.3rem; font-weight: 800; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    text-shadow: 0 2px 0 rgba(0,0,0,.25);
     box-shadow: 0 6px 0 rgba(0,0,0,.25); transition: transform .12s ease, box-shadow .12s ease;
   }
   .menuBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
-  .menuBtn.play { background: linear-gradient(#7ed37e, #43a047); border: 3px solid #2e7d32; }
-  .menuBtn.set  { background: linear-gradient(#ffd45c, #f0a500); border: 3px solid #b87a00; color: #5d3a00; }
-  .menuBtn.quit { background: linear-gradient(#ff7a6e, #d93c31); border: 3px solid #a82a21; }
+  .menuBtn.play { background: linear-gradient(#8ad65a, #4caf32); border: 4px solid #7a4a1e; }
+  .menuBtn.set  { background: linear-gradient(#ffc64d, #f39c12); border: 4px solid #7a4a1e; }
+  .menuBtn.quit { background: linear-gradient(#f0604f, #d62f25); border: 4px solid #7a4a1e; }
+  .menuBtn .ic { font-style: normal; font-size: 1.2rem; }
   #menuMsg { color: #3e2723; font-size: .85rem; min-height: 1.2em; text-align: center; text-shadow: 0 1px 0 #fff; }
 
   .backBtn {
@@ -208,6 +217,7 @@
 </head>
 <body>
 
+<img id="menuBg" src="textures/menu_bg.png" alt="" onload="this.style.display='block';document.getElementById('menuDeco').style.display='none'" onerror="this.remove()">
 <svg id="menuDeco" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs>
     <radialGradient id="sunG" cx="50%" cy="50%" r="50%">
@@ -298,10 +308,10 @@
   </g>
 </svg>
 <div id="mainMenu">
-  <div class="board"><div class="boardText">FERMER<span> OYUNU</span></div></div>
-  <button class="menuBtn play" id="btnPlay">Oyna</button>
-  <button class="menuBtn set" id="btnSettings">T&#601;nziml&#601;m&#601;</button>
-  <button class="menuBtn quit" id="btnQuit">&#199;&#305;x&#305;&#351;</button>
+  <div class="board"><div class="boardText">We<span>Village</span></div></div>
+  <button class="menuBtn play" id="btnPlay"><i class="ic">&#9654;</i>Play</button>
+  <button class="menuBtn set" id="btnSettings"><i class="ic">&#9881;</i>Settings</button>
+  <button class="menuBtn quit" id="btnQuit"><i class="ic">&#10162;</i>Quit</button>
   <div id="menuMsg"></div>
 </div>
 
@@ -325,7 +335,7 @@
 <div id="settingsModal" class="modal">
   <div class="card">
     <div class="head">
-      <h2>T&#601;nziml&#601;m&#601;</h2>
+      <h2>Settings</h2>
       <button class="btn small" id="closeSettings">Ba&#287;la</button>
     </div>
     <label class="setRow">
@@ -344,6 +354,7 @@
       <button class="btn small" id="openShop">Ma&#287;aza</button>
     </div>
   </div>
+  <div id="orders"></div>
   <div id="hint">H&#601;r&#601;k&#601;t: W A S D v&#601; ya ox d&#252;ym&#601;l&#601;ri. Toxumlar ambardan gəlir. Yolda g&#246;zl&#601;y&#601;n m&#252;&#351;t&#601;riy&#601; toxunub sifari&#351;i yerin&#601; yetirin.</div>
   <canvas id="world"></canvas>
   <div id="bottom">
@@ -621,8 +632,8 @@ function buildBackground() {
   const rnd = rng(42);
 
   const gg = g.createLinearGradient(0, 0, 0, H);
-  gg.addColorStop(0, "#b4e08a");
-  gg.addColorStop(1, "#7cb94a");
+  gg.addColorStop(0, "#c5e89a");
+  gg.addColorStop(1, "#8cc25a");
   g.fillStyle = gg;
   g.fillRect(0, 0, W, H);
 
@@ -1227,6 +1238,35 @@ function drawMood(g, x, y, color, sym) {
   g.fillText(sym, x, y);
 }
 
+// Off-screen customer markers: arrows at the canvas edge pointing to waiting shoppers
+function drawOffscreenOrders(gc, customers, now, cw, ch, s, camX, camY, dpr) {
+  gc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (const id of Object.keys(customers)) {
+    const c = customers[id];
+    const st = custState(c, now);
+    if (st.gone || st.mode === "leave") continue;
+    const sx = (st.x - camX) * s, sy = (st.y - camY) * s;
+    if (sx > 10 && sx < cw - 10 && sy > 10 && sy < ch - 10) continue;
+    const ex = clamp(sx, 22, cw - 22), ey = clamp(sy, 22, ch - 22);
+    const ang = Math.atan2(sy - ch / 2, sx - cw / 2);
+    gc.save();
+    gc.translate(ex, ey);
+    gc.rotate(ang);
+    gc.fillStyle = "rgba(255,247,224,.95)";
+    gc.beginPath(); gc.moveTo(12, 0); gc.lineTo(-6, -8); gc.lineTo(-6, 8); gc.closePath(); gc.fill();
+    gc.restore();
+    const label = custRequestText(c);
+    gc.font = "bold 10px system-ui, sans-serif";
+    const w = gc.measureText(label).width + 14;
+    const bx = clamp(ex - w / 2, 4, cw - w - 4), by = ey - 26 < 4 ? ey + 14 : ey - 26;
+    gc.fillStyle = "rgba(255,255,255,.95)";
+    rr(gc, bx, by, w, 16, 8);
+    gc.fillStyle = "#4e342e";
+    gc.textAlign = "center"; gc.textBaseline = "middle";
+    gc.fillText(label, bx + w / 2, by + 8);
+  }
+}
+
 // ---------- App ----------
 const statusEl  = document.getElementById("status");
 const selectEl  = document.getElementById("select");
@@ -1508,8 +1548,13 @@ if (!configured) {
     updateHotbar();
   });
 
+  let knownCust = null;
   customersRef.on("value", snap => {
     customers = snap.val() || {};
+    const ids = Object.keys(customers);
+    if (knownCust && me && ids.some(i => !knownCust.has(i))) showToast("Yeni m\u00FC\u015Fteri g\u0259ldi!");
+    knownCust = new Set(ids);
+    updateOrdersHud();
   });
 
   // ----- Cell helpers -----
@@ -1971,6 +2016,7 @@ if (!configured) {
     syncRemote();
     refreshButtons();
     leaderTick();
+    updateOrdersHud();
   }, 1000);
 
   function kickSelf(msg) {
@@ -2056,6 +2102,20 @@ if (!configured) {
       lastFrame = performance.now();
       requestAnimationFrame(loop);
     }
+  }
+
+  function updateOrdersHud() {
+    const ordersEl = document.getElementById("orders");
+    if (!ordersEl) return;
+    const now = serverNow();
+    const parts = [];
+    for (const id of Object.keys(customers)) {
+      const st = custState(customers[id], now);
+      if (st.gone || st.mode === "leave") continue;
+      const left = st.mode === "wait" ? ` (${Math.ceil(st.left * CUST_PATIENCE / 1000)} s)` : "";
+      parts.push(custRequestText(customers[id]) + left);
+    }
+    ordersEl.textContent = parts.length ? "Sifari\u015Fl\u0259r: " + parts.join("  \u00B7  ") : "Sifari\u015F yoxdur";
   }
 
   function updateInfo() {
@@ -2178,7 +2238,14 @@ if (!configured) {
       const r = remote[k];
       list.push({ role: k, x: r.x, y: r.y, f: r.f, m: r.m, label: r.name });
     }
-    list.forEach(p => things.push({ y: p.y, draw: () => drawChar(g, p, time, p.label) }));
+    list.forEach(p => things.push({ y: p.y, draw: () => {
+      g.save();
+      g.translate(p.x, p.y);
+      g.scale(1.15, 1.15);
+      g.translate(-p.x, -p.y);
+      drawChar(g, p, time, p.label);
+      g.restore();
+    } }));
 
     for (const id of Object.keys(customers)) {
       const c = customers[id];
@@ -2218,6 +2285,7 @@ if (!configured) {
       g.fillRect(me.x - pr, me.y - 10 - pr, pr * 2, pr * 2);
       g.globalCompositeOperation = "source-over";
     }
+    drawOffscreenOrders(g, customers, now, cw, ch, s, camX, camY, dpr);
   }
 }
 </script>
