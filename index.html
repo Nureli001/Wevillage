@@ -113,14 +113,18 @@
   .row .grow { flex: 1; font-size: .9rem; }
   .row .grow small { color: #6d4c41; }
   .icon.soil {
-    width: 52px; height: 36px; border-radius: 6px; border: 2px solid #6b4a2b;
-    background: repeating-linear-gradient(0deg, #8d6a46 0 10px, #6b4a2b 10px 13px);
-    flex-shrink: 0;
+    width: 44px; height: 44px; border-radius: 6px; border: 2px solid #6b4a2b; flex-shrink: 0;
+    background: #8d6a46;
   }
   .icon.seed {
     width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
     background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #a1887f 34% 100%);
     border: 2px solid #6d4c41;
+  }
+  .icon.barn {
+    width: 44px; height: 40px; flex-shrink: 0;
+    background: linear-gradient(#b5483a 0 70%, #5d2e22 70%);
+    clip-path: polygon(0 35%, 50% 0, 100% 35%, 100% 100%, 0 100%);
   }
 </style>
 </head>
@@ -163,7 +167,7 @@
       <div class="icon soil"></div>
       <div class="grow">
         <b>Torpaq</b><br>
-        <small>50 pul &middot; yeni sah&#601; &#601;lav&#601; edir</small>
+        <small>50 pul &middot; yeni kiçik sah&#601; &#601;lav&#601; edir</small>
       </div>
       <button class="btn" id="buy-soil">Al</button>
     </div>
@@ -175,6 +179,14 @@
         <small>10 pul &middot; siz&#601;: <span id="seedCount">0</span></small>
       </div>
       <button class="btn" id="buy-seed">Al</button>
+    </div>
+
+    <div class="row">
+      <div class="icon barn"></div>
+      <div class="grow">
+        <b>Ambar</b><br>
+        <small>Ambarda: <span id="wheatStock">0</span> bu&#287;da</small>
+      </div>
     </div>
   </div>
 </div>
@@ -203,14 +215,16 @@ const SPEED = 150;            // units per second
 const R = 12;                 // player collision radius
 const SEND_MS = 100;          // network throttle
 const IDLE_MS = 20000;        // remove character after this much inactivity
-const SOIL = { w: 160, h: 100, price: 50, refund: 25 };
+const CELL = 64;              // soil cell size (grid)
+const SOIL = { price: 50, refund: 25 };
 const SEED_PRICE = 10;
-const HARVEST_PRICE = 25;
-const GROW_MS = 30000;        // wheat growth time (30 s)
+const WHEAT_YIELD = 3;        // wheat added to warehouse per harvest
+const GROW_MS = 30000;        // wheat growth time
 const START_COINS = 300;
+const BARN = { x: 448, y: 290, w: 128, h: 106 };
 
 const CHARS = {
-  boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 600, y: 300 } },
+  boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 360, y: 420 } },
   girl: { name: "Q\u0131z",   color: "#e0609a", start: { x: 1000, y: 620 } }
 };
 
@@ -245,6 +259,7 @@ function genTrees() {
     if (x < 240 && y < 700) continue;
     if (Math.hypot(x - 760, y - 460) < 170) continue;
     if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 55)) continue;
+    if (x > BARN.x - 40 && x < BARN.x + BARN.w + 40 && y > BARN.y - 40 && y < BARN.y + BARN.h + 40) continue;
     list.push([x, y]);
   }
   return list;
@@ -255,7 +270,8 @@ const TREES = genTrees();
 const OBST = [
   { t: "rect", x: 0, y: 0, w: 165, h: 150 },
   { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 },
-  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry }
+  { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry },
+  { t: "rect", x: BARN.x, y: BARN.y, w: BARN.w, h: BARN.h }
 ];
 TREES.forEach(([x, y]) => OBST.push({ t: "circ", x, y, r: 12 }));
 
@@ -275,6 +291,18 @@ function blocked(x, y) {
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function snapCell(v) { return Math.round(v / CELL) * CELL; }
+
+// ---------- Textures (with fallback if files are missing) ----------
+const soilImg = new Image();
+let soilReady = false;
+soilImg.onload = () => { soilReady = true; };
+soilImg.src = "textures/soil_tile.png";
+
+const wheatImg = new Image();
+let wheatReady = false;
+wheatImg.onload = () => { wheatReady = true; };
+wheatImg.src = "textures/wheat_tile.png";
 
 // ---------- Drawing helpers ----------
 function circ(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
@@ -437,64 +465,90 @@ function drawWaterfall(g, t) {
   g.restore();
 }
 
-// Soil plot with optional wheat
-function drawPlot(g, r, selected, now) {
-  g.fillStyle = "#6b4a2b";
-  rr(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 8);
-  g.fillStyle = "#8d6a46";
-  rr(g, r.x, r.y, r.w, r.h, 6);
-  g.fillStyle = "#6b4a2b";
-  for (let y = r.y + 12; y < r.y + r.h - 6; y += 18) g.fillRect(r.x + 8, y, r.w - 16, 6);
+// Barn (ambar) building
+function drawBarn(g, stock) {
+  const { x, y, w, h } = BARN;
+  g.fillStyle = "rgba(0,0,0,.2)";
+  g.beginPath(); g.ellipse(x + w / 2, y + h + 4, w / 2 + 6, 7, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#b5483a";
+  g.fillRect(x + 8, y + 40, w - 16, h - 40);
+  g.fillStyle = "#5d2e22";
+  g.beginPath();
+  g.moveTo(x - 6, y + 44); g.lineTo(x + w / 2, y + 4); g.lineTo(x + w + 6, y + 44);
+  g.closePath(); g.fill();
+  g.fillStyle = "#f5f0e6";
+  g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
+  g.strokeStyle = "#f5f0e6"; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x + w / 2 - 14, y + 62); g.lineTo(x + w / 2 + 14, y + h); g.stroke();
+  g.fillStyle = "rgba(0,0,0,.55)";
+  rr(g, x + w / 2 - 34, y - 14, 68, 13, 5);
+  g.fillStyle = "#ffffff";
+  g.font = "bold 10px system-ui, sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(`Ambar: ${stock}`, x + w / 2, y - 7.5);
+}
 
-  if (r.crop) drawWheat(g, r, now);
-
+// Soil cell (kiçik kvadrat). Seamless texture, so neighbours blend.
+function drawCell(g, c, selected, now) {
+  const x = c.x, y = c.y, s = CELL;
+  if (soilReady) {
+    g.drawImage(soilImg, x, y, s, s);
+  } else {
+    g.fillStyle = "#8d6a46";
+    g.fillRect(x, y, s, s);
+  }
+  if (c.crop) drawWheat(g, c, now);
   if (selected) {
     g.strokeStyle = "#ffeb3b";
     g.lineWidth = 3;
-    g.setLineDash([8, 5]);
-    g.strokeRect(r.x - 6, r.y - 6, r.w + 12, r.h + 12);
+    g.setLineDash([6, 4]);
+    g.strokeRect(x - 2, y - 2, s + 4, s + 4);
     g.setLineDash([]);
   }
 }
 
-function cropProgress(r, now) {
-  if (!r.crop) return 0;
-  return clamp((now - r.crop.t) / GROW_MS, 0, 1);
+function cropProgress(c, now) {
+  if (!c.crop) return 0;
+  return clamp((now - c.crop.t) / GROW_MS, 0, 1);
 }
 
-function drawWheat(g, r, now) {
-  const p = cropProgress(r, now);
-  const cols = 10;
-  for (let i = 0; i < cols; i++) {
-    const cx = r.x + 14 + i * ((r.w - 28) / (cols - 1));
-    for (let j = 0; j < 2; j++) {
-      const bx = cx + (j ? 5 : -5);
-      const base = r.y + r.h - 8 - j * 9;
-      const hgt = 6 + p * 34;
-      const color = p < 0.5 ? "#7cb342" : (p < 1 ? "#c0ca33" : "#f9a825");
-      g.strokeStyle = color;
-      g.lineWidth = 2.2;
-      g.beginPath();
-      g.moveTo(bx, base);
-      g.lineTo(bx + (j ? 1 : -1), base - hgt);
-      g.stroke();
-      if (p >= 1) {
-        g.fillStyle = "#fbc02d";
-        circ(g, bx + (j ? 1 : -1), base - hgt - 2.5, 2.8);
+function drawWheat(g, c, now) {
+  const p = cropProgress(c, now);
+  const x = c.x, y = c.y, s = CELL;
+
+  if (p >= 1 && wheatReady) {
+    // ripe: wheat texture fills the cell
+    g.drawImage(wheatImg, x, y, s, s);
+  } else {
+    // growing: small procedural sprouts inside the cell
+    const cols = 6;
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < 2; j++) {
+        const bx = x + 8 + i * ((s - 16) / (cols - 1));
+        const base = y + s - 8 - j * 8;
+        const hgt = 4 + p * 26;
+        g.strokeStyle = p < 0.5 ? "#7cb342" : (p < 1 ? "#c0ca33" : "#f9a825");
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(bx, base);
+        g.lineTo(bx + (j ? 1 : -1), base - hgt);
+        g.stroke();
+        if (p >= 1) {
+          g.fillStyle = "#fbc02d";
+          circ(g, bx + (j ? 1 : -1), base - hgt - 2, 2.2);
+        }
       }
     }
   }
 
-  // Status label above the plot
   const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
-  g.font = "bold 10px system-ui, sans-serif";
+  g.font = "bold 9px system-ui, sans-serif";
   const w = g.measureText(label).width + 10;
   g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.55)";
-  rr(g, r.x + r.w / 2 - w / 2, r.y - 18, w, 13, 5);
+  rr(g, x + s / 2 - w / 2, y - 16, w, 12, 5);
   g.fillStyle = "#ffffff";
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.fillText(label, r.x + r.w / 2, r.y - 11.5);
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(label, x + s / 2, y - 10);
 }
 
 // Character drawn with code
@@ -611,6 +665,7 @@ const shopModal = document.getElementById("shopModal");
 const closeBtn  = document.getElementById("closeShop");
 const coinsModal= document.getElementById("coinsModal");
 const seedCount = document.getElementById("seedCount");
+const wheatStockEl = document.getElementById("wheatStock");
 const buySoilBtn= document.getElementById("buy-soil");
 const buySeedBtn= document.getElementById("buy-seed");
 const delBtn    = document.getElementById("del-plot");
@@ -626,11 +681,11 @@ if (!configured) {
   const db = firebase.database();
   const roomRef = db.ref(`rooms/${ROOM_ID}`);
   const playersRef = roomRef.child("players");
-  const plotsRef = roomRef.child("plots");
+  const cellsRef = roomRef.child("cells");
+  const warehouseRef = roomRef.child("warehouse/wheat");
   const g = canvas.getContext("2d");
   const bgCanvas = buildBackground();
 
-  // Server time offset, so growth timers agree across phones
   let serverOffset = 0;
   db.ref(".info/serverTimeOffset").on("value", s => { serverOffset = s.val() || 0; });
   const serverNow = () => Date.now() + serverOffset;
@@ -645,11 +700,12 @@ if (!configured) {
   let lastSent = 0, lastKey = "";
   let t = 0, lastFrame = performance.now();
 
-  let plots = {};
+  let cells = {};
   let selectedId = null;
-  let drag = null;           // {id, ox, oy, x, y, sx, sy, moved, lastSent}
+  let drag = null;
   let coins = START_COINS;
   let seeds = 0;
+  let wheatStock = 0;
   let lastCam = { x: 0, y: 0, s: 1 };
 
   // ----- Input: keyboard -----
@@ -740,79 +796,70 @@ if (!configured) {
     }
   }
 
-  // ----- Sync: plots -----
-  plotsRef.on("value", snap => {
-    plots = snap.val() || {};
-    if (selectedId && !plots[selectedId]) selectedId = null;
+  // ----- Sync: soil cells -----
+  cellsRef.on("value", snap => {
+    cells = snap.val() || {};
+    if (selectedId && !cells[selectedId]) selectedId = null;
     updateShop();
   });
 
-  roomRef.child("meta/starterPlaced").transaction(cur => {
+  // Starter cell in the centre, created once for the whole room
+  roomRef.child("meta/cellsStarter").transaction(cur => {
     if (cur) return;
     return true;
   }).then(res => {
     if (res.committed && res.snapshot.val() === true) {
-      plotsRef.child("start").set({ x: 680, y: 410, w: SOIL.w, h: SOIL.h });
+      cellsRef.child("start").set({ x: 704, y: 448, w: CELL, h: CELL });
     }
   });
 
-  // ----- Plot helpers -----
+  // ----- Sync: warehouse -----
+  warehouseRef.on("value", snap => {
+    wheatStock = snap.val() || 0;
+    wheatStockEl.textContent = wheatStock;
+  });
+
+  // ----- Cell helpers -----
   function overlaps(a, b) {
     return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   }
   function overlapsAny(rect, exceptId) {
-    for (const k in plots) {
+    for (const k in cells) {
       if (k === exceptId) continue;
-      if (overlaps(rect, plots[k])) return true;
+      if (overlaps(rect, cells[k])) return true;
     }
     return false;
   }
-  function snapRect(r, id) {
-    const SN = 14;
-    let x = r.x, y = r.y;
-    for (const k in plots) {
-      if (k === id) continue;
-      const o = plots[k];
-      const vOverlap = r.y < o.y + o.h + SN && r.y + r.h > o.y - SN;
-      const hOverlap = r.x < o.x + o.w + SN && r.x + r.w > o.x - SN;
-      if (vOverlap) {
-        if (Math.abs(r.x - (o.x + o.w)) < SN) x = o.x + o.w;
-        if (Math.abs((r.x + r.w) - o.x) < SN) x = o.x - r.w;
-      }
-      if (hOverlap) {
-        if (Math.abs(r.y - (o.y + o.h)) < SN) y = o.y + o.h;
-        if (Math.abs((r.y + r.h) - o.y) < SN) y = o.y - r.h;
-      }
-    }
-    return { x, y, w: r.w, h: r.h };
+  function cellFree(rect, exceptId) {
+    if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > W || rect.y + rect.h > H) return false;
+    if (overlapsAny(rect, exceptId)) return false;
+    const pts = [[rect.x, rect.y], [rect.x + rect.w, rect.y], [rect.x, rect.y + rect.h],
+                 [rect.x + rect.w, rect.y + rect.h], [rect.x + rect.w / 2, rect.y + rect.h / 2]];
+    return !pts.some(([qx, qy]) => blocked(qx, qy));
   }
-  function hitPlot(wx, wy) {
-    const ids = Object.keys(plots).reverse();
+  function hitCell(wx, wy) {
+    const ids = Object.keys(cells).reverse();
     for (const id of ids) {
-      const r = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: plots[id].w, h: plots[id].h } : plots[id];
-      if (wx >= r.x && wx <= r.x + r.w && wy >= r.y && wy <= r.y + r.h) return id;
+      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: CELL, h: CELL } : cells[id];
+      if (wx >= c.x && wx <= c.x + CELL && wy >= c.y && wy <= c.y + CELL) return id;
     }
     return null;
   }
-  function findFreeSpot(cx, cy) {
-    for (let ring = 0; ring < 14; ring++) {
-      const steps = ring === 0 ? 1 : ring * 8;
-      for (let i = 0; i < steps; i++) {
-        const ang = (i / steps) * Math.PI * 2;
-        const px = cx + Math.cos(ang) * ring * 60;
-        const py = cy + Math.sin(ang) * ring * 60;
-        const rect = { x: Math.round(px - SOIL.w / 2), y: Math.round(py - SOIL.h / 2), w: SOIL.w, h: SOIL.h };
-        if (rect.x < 0 || rect.y < 0 || rect.x + rect.w > W || rect.y + rect.h > H) continue;
-        const corners = [[rect.x, rect.y], [rect.x + rect.w, rect.y], [rect.x, rect.y + rect.h], [rect.x + rect.w, rect.y + rect.h]];
-        if (corners.some(([qx, qy]) => blocked(qx, qy))) continue;
-        if (overlapsAny(rect, null)) continue;
-        return rect;
+  function findFreeCell(cx, cy) {
+    const bx = snapCell(cx - CELL / 2), by = snapCell(cy - CELL / 2);
+    for (let ring = 0; ring < 12; ring++) {
+      for (let dy = -ring; dy <= ring; dy++) {
+        for (let dx = -ring; dx <= ring; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          const rect = { x: bx + dx * CELL, y: by + dy * CELL, w: CELL, h: CELL };
+          if (cellFree(rect, null)) return rect;
+        }
       }
     }
     return null;
   }
 
-  // ----- Toast message -----
+  // ----- Toast -----
   function showToast(text) {
     toastEl.textContent = text;
     clearTimeout(showToast.timer);
@@ -830,7 +877,8 @@ if (!configured) {
     coinsEl.textContent = `Pul: ${coins}`;
     coinsModal.textContent = `Pul: ${coins}`;
     seedCount.textContent = seeds;
-    delBtn.disabled = !(selectedId && plots[selectedId]);
+    wheatStockEl.textContent = wheatStock;
+    delBtn.disabled = !(selectedId && cells[selectedId]);
     buySoilBtn.disabled = !me;
     buySeedBtn.disabled = !me;
   }
@@ -838,10 +886,10 @@ if (!configured) {
   buySoilBtn.addEventListener("click", () => {
     if (!me) return;
     if (coins < SOIL.price) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
-    const spot = findFreeSpot(me.x, me.y - 60);
+    const spot = findFreeCell(me.x, me.y - 60);
     if (!spot) { showToast("Yerl\u0259\u015Fdirm\u0259k \u00FC\u00E7\u00FCn yer tap\u0131lmad\u0131."); return; }
     coins -= SOIL.price;
-    const ref = plotsRef.push(spot);
+    const ref = cellsRef.push(spot);
     selectedId = ref.key;
     updateShop();
     showToast("Torpaq al\u0131nd\u0131. Yeni sah\u0259 \u0259lav\u0259 olundu.");
@@ -858,23 +906,23 @@ if (!configured) {
 
   delBtn.addEventListener("click", () => {
     if (!selectedId) return;
-    plotsRef.child(selectedId).remove();
+    cellsRef.child(selectedId).remove();
     coins += SOIL.refund;
     selectedId = null;
     updateShop();
   });
 
-  // ----- Tap actions on plots -----
+  // ----- Tap actions on a cell -----
   function handleTap(id) {
-    const r = plots[id];
-    if (!r) return;
-    if (r.crop) {
-      const p = cropProgress(r, serverNow());
+    const c = cells[id];
+    if (!c) return;
+    if (c.crop) {
+      const p = cropProgress(c, serverNow());
       if (p >= 1) {
-        plotsRef.child(id).child("crop").remove();
-        coins += HARVEST_PRICE;
-        showToast(`M\u0259hsul y\u0131\u011F\u0131ld\u0131 +${HARVEST_PRICE} pul`);
-        updateShop();
+        // harvest goes straight into the shared warehouse, nothing is sold
+        cellsRef.child(id).child("crop").remove();
+        warehouseRef.transaction(n => (n || 0) + WHEAT_YIELD);
+        showToast(`M\u0259hsul ambara \u0259lav\u0259 olundu: +${WHEAT_YIELD} bu\u011Fda`);
       } else {
         showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * GROW_MS / 1000)} s`);
       }
@@ -882,7 +930,7 @@ if (!configured) {
     }
     if (seeds > 0) {
       seeds -= 1;
-      plotsRef.child(id).update({ crop: { k: "wheat", t: serverNow() } });
+      cellsRef.child(id).update({ crop: { k: "wheat", t: serverNow() } });
       showToast("Toxum \u0259kildi.");
       updateShop();
     } else {
@@ -890,7 +938,7 @@ if (!configured) {
     }
   }
 
-  // ----- Canvas pointer: select, drag, tap -----
+  // ----- Canvas pointer: select, drag (grid snapped), tap -----
   function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left - canvas.clientLeft;
@@ -901,11 +949,11 @@ if (!configured) {
   canvas.addEventListener("pointerdown", e => {
     if (!me) return;
     const p = toWorld(e);
-    const id = hitPlot(p.x, p.y);
+    const id = hitCell(p.x, p.y);
     if (id) {
       selectedId = id;
-      const r = plots[id];
-      drag = { id, ox: p.x - r.x, oy: p.y - r.y, x: r.x, y: r.y, sx: p.x, sy: p.y, moved: false, lastSent: 0 };
+      const c = cells[id];
+      drag = { id, ox: p.x - c.x, oy: p.y - c.y, x: c.x, y: c.y, sx: p.x, sy: p.y, moved: false, lastSent: 0 };
       canvas.setPointerCapture(e.pointerId);
     } else {
       selectedId = null;
@@ -915,21 +963,22 @@ if (!configured) {
 
   canvas.addEventListener("pointermove", e => {
     if (!drag) return;
-    const r = plots[drag.id];
-    if (!r) { drag = null; return; }
+    const c = cells[drag.id];
+    if (!c) { drag = null; return; }
     const p = toWorld(e);
     if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 6) drag.moved = true;
     if (!drag.moved) return;
-    const nx = clamp(p.x - drag.ox, 0, W - r.w);
-    const ny = clamp(p.y - drag.oy, 0, H - r.h);
-    if (!overlapsAny({ x: nx, y: ny, w: r.w, h: r.h }, drag.id)) {
-      drag.x = nx;
-      drag.y = ny;
+
+    // snap to the grid while dragging; only accept free positions
+    const cand = { x: snapCell(p.x - drag.ox), y: snapCell(p.y - drag.oy), w: CELL, h: CELL };
+    if (cellFree(cand, drag.id)) {
+      drag.x = cand.x;
+      drag.y = cand.y;
     }
     const now = performance.now();
     if (now - drag.lastSent > SEND_MS) {
       drag.lastSent = now;
-      plotsRef.child(drag.id).update({ x: drag.x, y: drag.y });
+      cellsRef.child(drag.id).update({ x: drag.x, y: drag.y });
     }
   });
 
@@ -938,13 +987,7 @@ if (!configured) {
     const d = drag;
     drag = null;
     if (!d.moved) { handleTap(d.id); return; }
-    const r = plots[d.id];
-    if (r) {
-      const snapped = snapRect({ x: d.x, y: d.y, w: r.w, h: r.h }, d.id);
-      const ok = !overlapsAny(snapped, d.id);
-      const fin = ok ? { x: snapped.x, y: snapped.y } : { x: d.x, y: d.y };
-      plotsRef.child(d.id).update(fin);
-    }
+    cellsRef.child(d.id).update({ x: d.x, y: d.y });
   }
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
@@ -1052,7 +1095,7 @@ if (!configured) {
       (waiting ? " \u2014 dig\u0259r oyun\u00E7u g\u00F6zl\u0259nilir..." : "");
   }
 
-  // ----- Canvas sizing: full width -----
+  // ----- Canvas sizing -----
   function resizeCanvas() {
     const cw = Math.max(220, Math.min(window.innerWidth - 24, 760));
     const ch = Math.round(Math.min(cw * 0.66, window.innerHeight * 0.6));
@@ -1113,11 +1156,12 @@ if (!configured) {
     g.fillRect(camX, camY, VW, vh);
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWaterfall(g, time);
+    drawBarn(g, wheatStock);
 
     const now = serverNow();
-    for (const id in plots) {
-      const r = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: plots[id].w, h: plots[id].h, crop: plots[id].crop } : plots[id];
-      drawPlot(g, r, id === selectedId, now);
+    for (const id in cells) {
+      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, crop: cells[id].crop } : cells[id];
+      drawCell(g, c, id === selectedId, now);
     }
 
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
