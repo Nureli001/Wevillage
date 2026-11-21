@@ -82,8 +82,8 @@
     transform: translate(-50%, -50%); pointer-events: none;
   }
 
-  /* Shop modal */
-  #shopModal {
+  /* Modals */
+  .modal {
     display: none;
     position: fixed; inset: 0;
     background: rgba(0,0,0,.45);
@@ -91,7 +91,7 @@
     z-index: 10;
     padding: 12px;
   }
-  #shopModal.open { display: flex; }
+  .modal.open { display: flex; }
   .card {
     background: #fff8e1;
     border: 3px solid #8d6e63;
@@ -121,11 +121,10 @@
     background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #a1887f 34% 100%);
     border: 2px solid #6d4c41;
   }
-  .icon.barn {
-    width: 44px; height: 40px; flex-shrink: 0;
-    background: linear-gradient(#b5483a 0 70%, #5d2e22 70%);
-    clip-path: polygon(0 35%, 50% 0, 100% 35%, 100% 100%, 0 100%);
-  }
+  .barnPrev { width: 100%; border-radius: 10px; background: #fff; }
+  .bar { height: 14px; background: #e0d6c8; border-radius: 8px; overflow: hidden; }
+  #barFill { height: 100%; width: 0%; background: linear-gradient(#ffb74d, #ef6c00); transition: width .3s; }
+  #barText { font-size: .85rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -155,7 +154,7 @@
 </div>
 
 <!-- Shop modal -->
-<div id="shopModal">
+<div id="shopModal" class="modal">
   <div class="card">
     <div class="head">
       <h2>Ma&#287;aza</h2>
@@ -167,7 +166,7 @@
       <div class="icon soil"></div>
       <div class="grow">
         <b>Torpaq</b><br>
-        <small>50 pul &middot; yeni kiçik sah&#601; &#601;lav&#601; edir</small>
+        <small>50 pul &middot; yeni ki&#231;ik sah&#601; &#601;lav&#601; edir</small>
       </div>
       <button class="btn" id="buy-soil">Al</button>
     </div>
@@ -180,12 +179,24 @@
       </div>
       <button class="btn" id="buy-seed">Al</button>
     </div>
+  </div>
+</div>
 
+<!-- Barn modal (opens when the barn is tapped) -->
+<div id="barnModal" class="modal">
+  <div class="card">
+    <div class="head">
+      <h2>Ambar</h2>
+      <button class="btn small" id="closeBarn">Ba&#287;la</button>
+    </div>
+    <img class="barnPrev" id="barnPreview" src="textures/barn.png" alt="">
+    <div class="bar"><div id="barFill"></div></div>
+    <div id="barText"></div>
     <div class="row">
-      <div class="icon barn"></div>
+      <div class="icon seed"></div>
       <div class="grow">
-        <b>Ambar</b><br>
-        <small>Ambarda: <span id="wheatStock">0</span> bu&#287;da</small>
+        <b>Bu&#287;da</b><br>
+        <small>Ambarda: <span id="barWheat">0</span></small>
       </div>
     </div>
   </div>
@@ -219,9 +230,10 @@ const CELL = 64;              // soil cell size (grid)
 const SOIL = { price: 50, refund: 25 };
 const SEED_PRICE = 10;
 const WHEAT_YIELD = 3;        // wheat added to warehouse per harvest
+const WAREHOUSE_CAP = 40;     // total storage capacity of the barn
 const GROW_MS = 30000;        // wheat growth time
 const START_COINS = 300;
-const BARN = { x: 448, y: 290, w: 128, h: 106 };
+const BARN = { x: 420, y: 270, w: 170, h: 120 };
 
 const CHARS = {
   boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 360, y: 420 } },
@@ -271,7 +283,7 @@ const OBST = [
   { t: "rect", x: 0, y: 0, w: 165, h: 150 },
   { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 },
   { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry },
-  { t: "rect", x: BARN.x, y: BARN.y, w: BARN.w, h: BARN.h }
+  { t: "rect", x: BARN.x, y: BARN.y + 30, w: BARN.w, h: BARN.h - 30 }
 ];
 TREES.forEach(([x, y]) => OBST.push({ t: "circ", x, y, r: 12 }));
 
@@ -293,7 +305,7 @@ function blocked(x, y) {
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function snapCell(v) { return Math.round(v / CELL) * CELL; }
 
-// ---------- Textures (with fallback if files are missing) ----------
+// ---------- Textures (fallback drawn if a file is missing) ----------
 const soilImg = new Image();
 let soilReady = false;
 soilImg.onload = () => { soilReady = true; };
@@ -303,6 +315,11 @@ const wheatImg = new Image();
 let wheatReady = false;
 wheatImg.onload = () => { wheatReady = true; };
 wheatImg.src = "textures/wheat_tile.png";
+
+const barnImg = new Image();
+let barnReady = false;
+barnImg.onload = () => { barnReady = true; };
+barnImg.src = "textures/barn.png";
 
 // ---------- Drawing helpers ----------
 function circ(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
@@ -465,30 +482,26 @@ function drawWaterfall(g, t) {
   g.restore();
 }
 
-// Barn (ambar) building
-function drawBarn(g, stock) {
+// Barn: uses textures/barn.png, or a simple drawn barn if the file is missing
+function drawBarn(g) {
   const { x, y, w, h } = BARN;
   g.fillStyle = "rgba(0,0,0,.2)";
-  g.beginPath(); g.ellipse(x + w / 2, y + h + 4, w / 2 + 6, 7, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.ellipse(x + w / 2, y + h + 2, w / 2 + 4, 6, 0, 0, Math.PI * 2); g.fill();
+  if (barnReady) {
+    g.drawImage(barnImg, x, y, w, h);
+    return;
+  }
   g.fillStyle = "#b5483a";
-  g.fillRect(x + 8, y + 40, w - 16, h - 40);
+  g.fillRect(x + 10, y + 40, w - 20, h - 40);
   g.fillStyle = "#5d2e22";
   g.beginPath();
-  g.moveTo(x - 6, y + 44); g.lineTo(x + w / 2, y + 4); g.lineTo(x + w + 6, y + 44);
+  g.moveTo(x, y + 44); g.lineTo(x + w / 2, y + 4); g.lineTo(x + w, y + 44);
   g.closePath(); g.fill();
   g.fillStyle = "#f5f0e6";
   g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
-  g.strokeStyle = "#f5f0e6"; g.lineWidth = 2;
-  g.beginPath(); g.moveTo(x + w / 2 - 14, y + 62); g.lineTo(x + w / 2 + 14, y + h); g.stroke();
-  g.fillStyle = "rgba(0,0,0,.55)";
-  rr(g, x + w / 2 - 34, y - 14, 68, 13, 5);
-  g.fillStyle = "#ffffff";
-  g.font = "bold 10px system-ui, sans-serif";
-  g.textAlign = "center"; g.textBaseline = "middle";
-  g.fillText(`Ambar: ${stock}`, x + w / 2, y - 7.5);
 }
 
-// Soil cell (kiçik kvadrat). Seamless texture, so neighbours blend.
+// Soil cell
 function drawCell(g, c, selected, now) {
   const x = c.x, y = c.y, s = CELL;
   if (soilReady) {
@@ -497,7 +510,7 @@ function drawCell(g, c, selected, now) {
     g.fillStyle = "#8d6a46";
     g.fillRect(x, y, s, s);
   }
-  if (c.crop) drawWheat(g, c, now);
+  if (c.crop) drawWheat(g, c, now, selected);
   if (selected) {
     g.strokeStyle = "#ffeb3b";
     g.lineWidth = 3;
@@ -512,15 +525,13 @@ function cropProgress(c, now) {
   return clamp((now - c.crop.t) / GROW_MS, 0, 1);
 }
 
-function drawWheat(g, c, now) {
+function drawWheat(g, c, now, selected) {
   const p = cropProgress(c, now);
   const x = c.x, y = c.y, s = CELL;
 
   if (p >= 1 && wheatReady) {
-    // ripe: wheat texture fills the cell
     g.drawImage(wheatImg, x, y, s, s);
   } else {
-    // growing: small procedural sprouts inside the cell
     const cols = 6;
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < 2; j++) {
@@ -541,14 +552,23 @@ function drawWheat(g, c, now) {
     }
   }
 
-  const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
-  g.font = "bold 9px system-ui, sans-serif";
-  const w = g.measureText(label).width + 10;
-  g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.55)";
-  rr(g, x + s / 2 - w / 2, y - 16, w, 12, 5);
-  g.fillStyle = "#ffffff";
-  g.textAlign = "center"; g.textBaseline = "middle";
-  g.fillText(label, x + s / 2, y - 10);
+  // progress bar along the bottom of the cell (small, no overlapping text)
+  g.fillStyle = "rgba(0,0,0,.35)";
+  g.fillRect(x + 4, y + s - 6, s - 8, 3);
+  g.fillStyle = p >= 1 ? "#ffb300" : "#9ccc65";
+  g.fillRect(x + 4, y + s - 6, (s - 8) * p, 3);
+
+  // full text label only for the selected cell
+  if (selected) {
+    const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
+    g.font = "bold 9px system-ui, sans-serif";
+    const w = g.measureText(label).width + 10;
+    g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.6)";
+    rr(g, x + s / 2 - w / 2, y - 16, w, 12, 5);
+    g.fillStyle = "#ffffff";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText(label, x + s / 2, y - 10);
+  }
 }
 
 // Character drawn with code
@@ -665,11 +685,15 @@ const shopModal = document.getElementById("shopModal");
 const closeBtn  = document.getElementById("closeShop");
 const coinsModal= document.getElementById("coinsModal");
 const seedCount = document.getElementById("seedCount");
-const wheatStockEl = document.getElementById("wheatStock");
 const buySoilBtn= document.getElementById("buy-soil");
 const buySeedBtn= document.getElementById("buy-seed");
 const delBtn    = document.getElementById("del-plot");
 const toastEl   = document.getElementById("toast");
+const barnModal = document.getElementById("barnModal");
+const closeBarn = document.getElementById("closeBarn");
+const barFill   = document.getElementById("barFill");
+const barText   = document.getElementById("barText");
+const barWheat  = document.getElementById("barWheat");
 
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
@@ -716,9 +740,12 @@ if (!configured) {
     a: [-1, 0], arrowleft: [-1, 0],
     d: [1, 0],  arrowright: [1, 0]
   };
+  function anyModalOpen() {
+    return shopModal.classList.contains("open") || barnModal.classList.contains("open");
+  }
   document.addEventListener("keydown", e => {
     const k = e.key.toLowerCase();
-    if (KEYS[k] && !shopModal.classList.contains("open")) { e.preventDefault(); keysDown.add(k); }
+    if (KEYS[k] && !anyModalOpen()) { e.preventDefault(); keysDown.add(k); }
   });
   document.addEventListener("keyup", e => keysDown.delete(e.key.toLowerCase()));
   window.addEventListener("blur", () => { keysDown.clear(); joy = { x: 0, y: 0 }; });
@@ -803,7 +830,6 @@ if (!configured) {
     updateShop();
   });
 
-  // Starter cell in the centre, created once for the whole room
   roomRef.child("meta/cellsStarter").transaction(cur => {
     if (cur) return;
     return true;
@@ -816,7 +842,7 @@ if (!configured) {
   // ----- Sync: warehouse -----
   warehouseRef.on("value", snap => {
     wheatStock = snap.val() || 0;
-    wheatStockEl.textContent = wheatStock;
+    updateBarn();
   });
 
   // ----- Cell helpers -----
@@ -840,10 +866,14 @@ if (!configured) {
   function hitCell(wx, wy) {
     const ids = Object.keys(cells).reverse();
     for (const id of ids) {
-      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, w: CELL, h: CELL } : cells[id];
+      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y } : cells[id];
       if (wx >= c.x && wx <= c.x + CELL && wy >= c.y && wy <= c.y + CELL) return id;
     }
     return null;
+  }
+  function hitBarn(wx, wy) {
+    const m = 6;
+    return wx >= BARN.x - m && wx <= BARN.x + BARN.w + m && wy >= BARN.y - m && wy <= BARN.y + BARN.h + m;
   }
   function findFreeCell(cx, cy) {
     const bx = snapCell(cx - CELL / 2), by = snapCell(cy - CELL / 2);
@@ -863,7 +893,7 @@ if (!configured) {
   function showToast(text) {
     toastEl.textContent = text;
     clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => { toastEl.textContent = ""; }, 2500);
+    showToast.timer = setTimeout(() => { toastEl.textContent = ""; }, 3000);
   }
 
   // ----- Shop modal -----
@@ -877,10 +907,24 @@ if (!configured) {
     coinsEl.textContent = `Pul: ${coins}`;
     coinsModal.textContent = `Pul: ${coins}`;
     seedCount.textContent = seeds;
-    wheatStockEl.textContent = wheatStock;
     delBtn.disabled = !(selectedId && cells[selectedId]);
     buySoilBtn.disabled = !me;
     buySeedBtn.disabled = !me;
+  }
+
+  // ----- Barn modal (shows capacity only when the barn is tapped) -----
+  function openBarn() { barnModal.classList.add("open"); updateBarn(); }
+  function closeBarnModal() { barnModal.classList.remove("open"); }
+  closeBarn.addEventListener("click", closeBarnModal);
+  barnModal.addEventListener("click", e => { if (e.target === barnModal) closeBarnModal(); });
+
+  function updateBarn() {
+    const used = wheatStock;
+    const free = Math.max(0, WAREHOUSE_CAP - used);
+    const pct = Math.min(100, (used / WAREHOUSE_CAP) * 100);
+    barFill.style.width = pct + "%";
+    barText.textContent = `Tutum: ${WAREHOUSE_CAP}  \u00B7  \u0130stifad\u0259 olunub: ${used}  \u00B7  Bo\u015F yer: ${free}`;
+    barWheat.textContent = used;
   }
 
   buySoilBtn.addEventListener("click", () => {
@@ -918,14 +962,24 @@ if (!configured) {
     if (!c) return;
     if (c.crop) {
       const p = cropProgress(c, serverNow());
-      if (p >= 1) {
-        // harvest goes straight into the shared warehouse, nothing is sold
-        cellsRef.child(id).child("crop").remove();
-        warehouseRef.transaction(n => (n || 0) + WHEAT_YIELD);
-        showToast(`M\u0259hsul ambara \u0259lav\u0259 olundu: +${WHEAT_YIELD} bu\u011Fda`);
-      } else {
+      if (p < 1) {
         showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * GROW_MS / 1000)} s`);
+        return;
       }
+      // harvest: move wheat into the warehouse only if there is room
+      warehouseRef.transaction(n => {
+        n = n || 0;
+        if (n + WHEAT_YIELD > WAREHOUSE_CAP) return;   // abort: no room
+        return n + WHEAT_YIELD;
+      }).then(res => {
+        if (res.committed) {
+          cellsRef.child(id).child("crop").remove();
+          const left = WAREHOUSE_CAP - res.snapshot.val();
+          showToast(`M\u0259hsul ambara \u0259lav\u0259 olundu: +${WHEAT_YIELD}. Ambarda ${left} yer qald\u0131.`);
+        } else {
+          showToast("Ambarda yer yoxdur. \u018Fvv\u0259l ambar\u0131 bo\u015Faldın.");
+        }
+      });
       return;
     }
     if (seeds > 0) {
@@ -938,7 +992,7 @@ if (!configured) {
     }
   }
 
-  // ----- Canvas pointer: select, drag (grid snapped), tap -----
+  // ----- Canvas pointer: select, drag (grid snapped), tap, barn -----
   function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left - canvas.clientLeft;
@@ -955,6 +1009,9 @@ if (!configured) {
       const c = cells[id];
       drag = { id, ox: p.x - c.x, oy: p.y - c.y, x: c.x, y: c.y, sx: p.x, sy: p.y, moved: false, lastSent: 0 };
       canvas.setPointerCapture(e.pointerId);
+    } else if (hitBarn(p.x, p.y)) {
+      selectedId = null;
+      openBarn();
     } else {
       selectedId = null;
     }
@@ -969,7 +1026,6 @@ if (!configured) {
     if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) > 6) drag.moved = true;
     if (!drag.moved) return;
 
-    // snap to the grid while dragging; only accept free positions
     const cand = { x: snapCell(p.x - drag.ox), y: snapCell(p.y - drag.oy), w: CELL, h: CELL };
     if (cellFree(cand, drag.id)) {
       drag.x = cand.x;
@@ -1034,6 +1090,7 @@ if (!configured) {
     drag = null;
     selectedId = null;
     closeShop();
+    closeBarnModal();
     Object.keys(remote).forEach(k => delete remote[k]);
     statusMsg = msg;
     gameEl.style.display = "none";
@@ -1156,7 +1213,6 @@ if (!configured) {
     g.fillRect(camX, camY, VW, vh);
     g.drawImage(bgCanvas, 0, 0, W, H);
     drawWaterfall(g, time);
-    drawBarn(g, wheatStock);
 
     const now = serverNow();
     for (const id in cells) {
@@ -1164,13 +1220,17 @@ if (!configured) {
       drawCell(g, c, id === selectedId, now);
     }
 
+    // barn is drawn among the other things, sorted by its bottom edge
+    const things = [];
+    things.push({ y: BARN.y + BARN.h, draw: () => drawBarn(g) });
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
     for (const k in remote) {
       const r = remote[k];
       list.push({ role: k, x: r.x, y: r.y, f: r.f, m: r.m, label: r.name });
     }
-    list.sort((a, b) => a.y - b.y);
-    list.forEach(p => drawChar(g, p, time, p.label));
+    list.forEach(p => things.push({ y: p.y, draw: () => drawChar(g, p, time, p.label) }));
+    things.sort((a, b) => a.y - b.y);
+    things.forEach(th => th.draw());
   }
 }
 </script>
