@@ -52,6 +52,20 @@
   #bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 36px; }
   #toast { color: #fff; font-size: .85rem; text-shadow: 0 1px 3px #000; text-align: right; flex: 1; }
 
+  /* Hotbar (slots under the map) */
+  #hotbar { display: flex; gap: 8px; justify-content: center; width: 100%; }
+  .slot {
+    width: 64px; height: 50px;
+    background: rgba(255,255,255,.9);
+    border: 2px solid #8d6e63; border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: .72rem; color: #3e2723; cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.25);
+  }
+  .slot.sel { border-color: #ffeb3b; box-shadow: 0 0 0 2px #ffeb3b, 0 3px 0 rgba(0,0,0,.25); }
+  .slot.off { opacity: .45; }
+  .slot b { font-size: .85rem; }
+
   .btn {
     border: none; border-radius: 8px; background: #4caf50; color: #fff;
     padding: 8px 12px; font-size: .9rem; cursor: pointer;
@@ -121,10 +135,16 @@
     background: radial-gradient(circle at 50% 40%, #fbc02d 0 30%, #a1887f 34% 100%);
     border: 2px solid #6d4c41;
   }
+  .icon.rod {
+    width: 44px; height: 44px; flex-shrink: 0;
+    background: linear-gradient(135deg, transparent 46%, #6d4c41 47% 52%, transparent 53%);
+    border: 2px dashed #8d6e63; border-radius: 8px;
+  }
   .barnPrev { width: 100%; border-radius: 10px; background: #fff; }
   .bar { height: 14px; background: #e0d6c8; border-radius: 8px; overflow: hidden; }
   #barFill { height: 100%; width: 0%; background: linear-gradient(#ffb74d, #ef6c00); transition: width .3s; }
   #barText { font-size: .85rem; text-align: center; }
+  #fishList { font-size: .85rem; text-align: center; color: #5d4037; }
 </style>
 </head>
 <body>
@@ -149,6 +169,13 @@
   <div id="bottom">
     <div id="toast"></div>
     <button class="btn danger small" id="del-plot" disabled>Sil (+25 pul)</button>
+  </div>
+  <div id="hotbar">
+    <div class="slot off" data-i="0" id="slot0"><b>Tilov</b><span id="slot0c">yoxdur</span></div>
+    <div class="slot" data-i="1" id="slot1"><b>Toxum</b><span id="slot1c">0</span></div>
+    <div class="slot" data-i="2" id="slot2"><b>Bal&#305;q</b><span id="slot2c">0</span></div>
+    <div class="slot off" data-i="3"><b>&mdash;</b><span>bo&#351;</span></div>
+    <div class="slot off" data-i="4"><b>&mdash;</b><span>bo&#351;</span></div>
   </div>
   <div id="joy"><div id="knob"></div></div>
 </div>
@@ -179,10 +206,21 @@
       </div>
       <button class="btn" id="buy-seed">Al</button>
     </div>
+
+    <div class="row">
+      <div class="icon rod"></div>
+      <div class="grow">
+        <b>Tilov</b><br>
+        <small>40 pul &middot; g&#246;l&#252;n k&#601;nar&#305;nda bal&#305;q tutmaq &#252;&#231;&#252;n</small>
+      </div>
+      <button class="btn" id="buy-rod">Al</button>
+    </div>
+
+    <div id="fishList"></div>
   </div>
 </div>
 
-<!-- Barn modal (opens when the barn is tapped) -->
+<!-- Barn modal -->
 <div id="barnModal" class="modal">
   <div class="card">
     <div class="head">
@@ -220,29 +258,38 @@ const firebaseConfig = {
 
 // ---------- Settings ----------
 const ROOM_ID = "main";
-const W = 1600, H = 1000;     // world size in units
-const VW = 480;               // visible width in units (camera)
-const SPEED = 150;            // units per second
-const R = 12;                 // player collision radius
-const SEND_MS = 100;          // network throttle
-const IDLE_MS = 20000;        // remove character after this much inactivity
-const CELL = 64;              // soil cell size (grid)
+const W = 1600, H = 1000;
+const VW = 480;
+const SPEED = 150;
+const R = 12;
+const SEND_MS = 100;
+const IDLE_MS = 20000;
+const CELL = 64;
 const SOIL = { price: 50, refund: 25 };
 const SEED_PRICE = 10;
-const WHEAT_YIELD = 3;        // wheat added to warehouse per harvest
-const WAREHOUSE_CAP = 40;     // total storage capacity of the barn
-const GROW_MS = 30000;        // wheat growth time
+const ROD_PRICE = 40;
+const WHEAT_YIELD = 3;
+const WAREHOUSE_CAP = 40;
+const GROW_MS = 30000;
 const START_COINS = 300;
-const BARN = { x: 420, y: 270, w: 170, h: 120 };
+const BARN = { x: 470, y: 150, w: 150, h: 106 };
 
 const CHARS = {
   boy:  { name: "O\u011Flan", color: "#3f7cd9", start: { x: 360, y: 420 } },
   girl: { name: "Q\u0131z",   color: "#e0609a", start: { x: 1000, y: 620 } }
 };
 
-// Lake and waterfall geometry
+// Lake and waterfall
 const LAKE = { cx: 120, cy: 480, rx: 125, ry: 80 };
 const FALL = { x0: 62, x1: 124, y0: 150, y1: 402 };
+const FALL_BASE = { x: 93, y: 404 };
+
+// Fish types (drawn in code)
+const FISH = {
+  carp:  { name: "Sazan", body: "#e8a33d", fin: "#c97b1a", len: 22, h: 9,  weight: 0.45 },
+  pike:  { name: "Xan",   body: "#3f7a4a", fin: "#2c5a35", len: 28, h: 7,  weight: 0.25 },
+  bream: { name: "G\u00FCm\u00FC\u015F", body: "#b8c4cc", fin: "#8d9aa3", len: 18, h: 10, weight: 0.30 }
+};
 
 // Dirt path
 const PATH = [[300, 1000], [420, 760], [700, 640], [900, 560], [1150, 600], [1400, 780], [1600, 800]];
@@ -278,7 +325,6 @@ function genTrees() {
 }
 const TREES = genTrees();
 
-// Collision obstacles
 const OBST = [
   { t: "rect", x: 0, y: 0, w: 165, h: 150 },
   { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 },
@@ -303,7 +349,16 @@ function blocked(x, y) {
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function lerp(a, b, k) { return a + (b - a) * k; }
 function snapCell(v) { return Math.round(v / CELL) * CELL; }
+function inLake(x, y) {
+  const a = (x - LAKE.cx) / LAKE.rx, b = (y - LAKE.cy) / LAKE.ry;
+  return a * a + b * b < 1;
+}
+function nearLake(x, y) {
+  const a = (x - LAKE.cx) / (LAKE.rx + 70), b = (y - LAKE.cy) / (LAKE.ry + 70);
+  return a * a + b * b < 1;
+}
 
 // ---------- Textures (fallback drawn if a file is missing) ----------
 const soilImg = new Image();
@@ -435,7 +490,8 @@ function buildBackground() {
   return c;
 }
 
-function drawWaterfall(g, t) {
+// Animated water: waterfall, splash at its base, bubbles and ripples in the lake
+function drawWater(g, t) {
   const { x0, x1, y0, y1 } = FALL;
   const wg = g.createLinearGradient(x0, 0, x1, 0);
   wg.addColorStop(0, "#cfefff");
@@ -457,22 +513,41 @@ function drawWaterfall(g, t) {
     g.stroke();
   }
 
+  // splash droplets at the waterfall base
+  for (let i = 0; i < 12; i++) {
+    const k = (t * 1.5 + i / 12) % 1;
+    const sx = FALL_BASE.x + (i - 6) * 2.8 * k;
+    const sy = FALL_BASE.y - Math.sin(Math.PI * k) * 18 + 2;
+    g.fillStyle = `rgba(255,255,255,${(1 - k) * 0.85})`;
+    circ(g, sx, sy, 1.6 - k * 0.6);
+  }
+  // foam pulse at the base
   const p = (Math.sin(t * 5) + 1) / 2;
-  g.fillStyle = "rgba(255,255,255,.7)";
-  g.beginPath(); g.ellipse(93, 404, 26 + p * 6, 8 + p * 2, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "rgba(255,255,255,.65)";
+  g.beginPath(); g.ellipse(FALL_BASE.x, FALL_BASE.y + 1, 24 + p * 7, 7 + p * 2, 0, 0, Math.PI * 2); g.fill();
 
   g.save();
   g.beginPath();
   g.ellipse(LAKE.cx, LAKE.cy, LAKE.rx, LAKE.ry, 0, 0, Math.PI * 2);
   g.clip();
+  // expanding ripples from the waterfall
   for (let i = 0; i < 3; i++) {
     const k = (t * 0.5 + i / 3) % 1;
     g.strokeStyle = `rgba(255,255,255,${(1 - k) * 0.7})`;
     g.lineWidth = 1.8;
     g.beginPath();
-    g.ellipse(93, 406, 12 + k * 70, 5 + k * 22, 0, 0, Math.PI * 2);
+    g.ellipse(FALL_BASE.x, FALL_BASE.y + 2, 12 + k * 70, 5 + k * 22, 0, 0, Math.PI * 2);
     g.stroke();
   }
+  // rising bubbles
+  for (let i = 0; i < 9; i++) {
+    const k = (t * 0.22 + i / 9) % 1;
+    const bx = 50 + ((i * 53) % 150);
+    const by = 540 - k * 110;
+    g.fillStyle = `rgba(255,255,255,${0.55 * (1 - k)})`;
+    circ(g, bx, by, 1.2 + k * 1.4);
+  }
+  // shimmer
   g.fillStyle = "rgba(255,255,255,.35)";
   for (let i = 0; i < 5; i++) {
     const sx = 40 + ((i * 97 + t * 20) % 160);
@@ -482,7 +557,7 @@ function drawWaterfall(g, t) {
   g.restore();
 }
 
-// Barn: uses textures/barn.png, or a simple drawn barn if the file is missing
+// Barn
 function drawBarn(g) {
   const { x, y, w, h } = BARN;
   g.fillStyle = "rgba(0,0,0,.2)";
@@ -501,7 +576,11 @@ function drawBarn(g) {
   g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
 }
 
-// Soil cell
+// Soil cell: raised 3D tile (shadow under, light top-left, dark bottom-right)
+function drawCellShadow(g, c) {
+  g.fillStyle = "rgba(0,0,0,.30)";
+  g.fillRect(c.x + 3, c.y + 5, CELL, CELL);
+}
 function drawCell(g, c, selected, now) {
   const x = c.x, y = c.y, s = CELL;
   if (soilReady) {
@@ -510,7 +589,15 @@ function drawCell(g, c, selected, now) {
     g.fillStyle = "#8d6a46";
     g.fillRect(x, y, s, s);
   }
-  if (c.crop) drawWheat(g, c, now, selected);
+  // bevel: light top and left, dark bottom and right
+  g.fillStyle = "rgba(255,255,255,.28)";
+  g.fillRect(x, y, s, 2);
+  g.fillRect(x, y, 2, s);
+  g.fillStyle = "rgba(0,0,0,.38)";
+  g.fillRect(x, y + s - 3, s, 3);
+  g.fillRect(x + s - 3, y, 3, s);
+
+  if (c.crop) drawWheat(g, c, now);
   if (selected) {
     g.strokeStyle = "#ffeb3b";
     g.lineWidth = 3;
@@ -525,7 +612,7 @@ function cropProgress(c, now) {
   return clamp((now - c.crop.t) / GROW_MS, 0, 1);
 }
 
-function drawWheat(g, c, now, selected) {
+function drawWheat(g, c, now) {
   const p = cropProgress(c, now);
   const x = c.x, y = c.y, s = CELL;
 
@@ -551,24 +638,64 @@ function drawWheat(g, c, now, selected) {
       }
     }
   }
-
-  // progress bar along the bottom of the cell (small, no overlapping text)
   g.fillStyle = "rgba(0,0,0,.35)";
   g.fillRect(x + 4, y + s - 6, s - 8, 3);
   g.fillStyle = p >= 1 ? "#ffb300" : "#9ccc65";
   g.fillRect(x + 4, y + s - 6, (s - 8) * p, 3);
+}
 
-  // full text label only for the selected cell
-  if (selected) {
-    const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
-    g.font = "bold 9px system-ui, sans-serif";
-    const w = g.measureText(label).width + 10;
-    g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.6)";
-    rr(g, x + s / 2 - w / 2, y - 16, w, 12, 5);
-    g.fillStyle = "#ffffff";
-    g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText(label, x + s / 2, y - 10);
+function drawCellLabel(g, c, now) {
+  if (!c.crop) return;
+  const p = cropProgress(c, now);
+  const label = p >= 1 ? "Yeti\u015Fdi!" : `B\u00F6y\u00FCy\u00FCr ${Math.ceil((1 - p) * GROW_MS / 1000)} s`;
+  g.font = "bold 9px system-ui, sans-serif";
+  const w = g.measureText(label).width + 10;
+  g.fillStyle = p >= 1 ? "rgba(255,160,0,.9)" : "rgba(0,0,0,.6)";
+  rr(g, c.x + CELL / 2 - w / 2, c.y - 16, w, 12, 5);
+  g.fillStyle = "#ffffff";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(label, c.x + CELL / 2, c.y - 10);
+}
+
+// Fish drawn in code, three types
+function drawFish(g, x, y, type, t, ang) {
+  const f = FISH[type];
+  g.save();
+  g.translate(x, y);
+  g.rotate(ang);
+  g.rotate(Math.sin(t * 14) * 0.22);
+  // tail
+  g.fillStyle = f.fin;
+  g.beginPath();
+  g.moveTo(-f.len / 2 + 2, 0);
+  g.lineTo(-f.len / 2 - 7, -f.h / 2);
+  g.lineTo(-f.len / 2 - 7, f.h / 2);
+  g.closePath(); g.fill();
+  // body
+  g.fillStyle = f.body;
+  g.beginPath(); g.ellipse(0, 0, f.len / 2, f.h / 2, 0, 0, Math.PI * 2); g.fill();
+  // belly highlight
+  g.fillStyle = "rgba(255,255,255,.25)";
+  g.beginPath(); g.ellipse(0, f.h / 6, f.len / 2.6, f.h / 5, 0, 0, Math.PI * 2); g.fill();
+  // dorsal fin
+  g.fillStyle = f.fin;
+  g.beginPath();
+  g.moveTo(-2, -f.h / 2 + 1); g.lineTo(3, -f.h / 2 - 4); g.lineTo(5, -f.h / 2 + 1);
+  g.closePath(); g.fill();
+  // pike stripes
+  if (type === "pike") {
+    g.strokeStyle = "rgba(0,0,0,.35)";
+    g.lineWidth = 1;
+    for (let i = -4; i <= 4; i += 4) {
+      g.beginPath(); g.moveTo(i, -f.h / 2 + 1); g.lineTo(i - 1, f.h / 2 - 1); g.stroke();
+    }
   }
+  // eye
+  g.fillStyle = "#ffffff";
+  circ(g, f.len / 2 - 5, -1.5, 1.8);
+  g.fillStyle = "#111111";
+  circ(g, f.len / 2 - 4.6, -1.5, 0.9);
+  g.restore();
 }
 
 // Character drawn with code
@@ -687,6 +814,8 @@ const coinsModal= document.getElementById("coinsModal");
 const seedCount = document.getElementById("seedCount");
 const buySoilBtn= document.getElementById("buy-soil");
 const buySeedBtn= document.getElementById("buy-seed");
+const buyRodBtn = document.getElementById("buy-rod");
+const fishListEl= document.getElementById("fishList");
 const delBtn    = document.getElementById("del-plot");
 const toastEl   = document.getElementById("toast");
 const barnModal = document.getElementById("barnModal");
@@ -694,6 +823,10 @@ const closeBarn = document.getElementById("closeBarn");
 const barFill   = document.getElementById("barFill");
 const barText   = document.getElementById("barText");
 const barWheat  = document.getElementById("barWheat");
+const slotEls   = [0, 1, 2, 3, 4].map(i => document.querySelector(`.slot[data-i="${i}"]`));
+const slot0c    = document.getElementById("slot0c");
+const slot1c    = document.getElementById("slot1c");
+const slot2c    = document.getElementById("slot2c");
 
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
@@ -730,7 +863,13 @@ if (!configured) {
   let coins = START_COINS;
   let seeds = 0;
   let wheatStock = 0;
+  let rodOwned = false;
+  let selectedTool = null;          // "rod" or null
+  const fishInv = { carp: 0, pike: 0, bream: 0 };
   let lastCam = { x: 0, y: 0, s: 1 };
+
+  // Fishing state machine: idle -> cast -> wait -> bite -> catch -> idle
+  const fishing = { state: "idle", tx: 0, ty: 0, startT: 0, biteAt: 0, biteEnd: 0, type: null, fromX: 0, fromY: 0 };
 
   // ----- Input: keyboard -----
   const keysDown = new Set();
@@ -896,6 +1035,28 @@ if (!configured) {
     showToast.timer = setTimeout(() => { toastEl.textContent = ""; }, 3000);
   }
 
+  // ----- Hotbar -----
+  function totalFish() { return fishInv.carp + fishInv.pike + fishInv.bream; }
+  function updateHotbar() {
+    slot0c.textContent = rodOwned ? "hazır" : "yoxdur";
+    slotEls[0].classList.toggle("off", !rodOwned);
+    slotEls[0].classList.toggle("sel", selectedTool === "rod");
+    slotEls[1].classList.toggle("sel", false);
+    slot1c.textContent = seeds;
+    slot2c.textContent = totalFish();
+  }
+  slotEls[0].addEventListener("click", () => {
+    if (!rodOwned) { showToast("\u018Fvv\u0259lc\u0259 ma\u011Fazadan tilov al\u0131n."); return; }
+    selectedTool = selectedTool === "rod" ? null : "rod";
+    updateHotbar();
+  });
+  slotEls[1].addEventListener("click", () => {
+    showToast(`Toxum: ${seeds}. Torpa\u011Fa toxunub \u0259kin.`);
+  });
+  slotEls[2].addEventListener("click", () => {
+    showToast(`Bal\u0131q: Sazan ${fishInv.carp}, Xan ${fishInv.pike}, G\u00FCm\u00FC\u015F ${fishInv.bream}`);
+  });
+
   // ----- Shop modal -----
   function openShop() { shopModal.classList.add("open"); updateShop(); }
   function closeShop() { shopModal.classList.remove("open"); }
@@ -910,9 +1071,13 @@ if (!configured) {
     delBtn.disabled = !(selectedId && cells[selectedId]);
     buySoilBtn.disabled = !me;
     buySeedBtn.disabled = !me;
+    buyRodBtn.disabled = !me || rodOwned;
+    buyRodBtn.textContent = rodOwned ? "Var" : "Al";
+    fishListEl.textContent = `Bal\u0131qlar\u0131m: Sazan ${fishInv.carp} \u00B7 Xan ${fishInv.pike} \u00B7 G\u00FCm\u00FC\u015F ${fishInv.bream}`;
+    updateHotbar();
   }
 
-  // ----- Barn modal (shows capacity only when the barn is tapped) -----
+  // ----- Barn modal -----
   function openBarn() { barnModal.classList.add("open"); updateBarn(); }
   function closeBarnModal() { barnModal.classList.remove("open"); }
   closeBarn.addEventListener("click", closeBarnModal);
@@ -948,6 +1113,16 @@ if (!configured) {
     showToast("Bu\u011Fda toxumu al\u0131nd\u0131.");
   });
 
+  buyRodBtn.addEventListener("click", () => {
+    if (!me || rodOwned) return;
+    if (coins < ROD_PRICE) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
+    coins -= ROD_PRICE;
+    rodOwned = true;
+    selectedTool = "rod";
+    updateShop();
+    showToast("Tilov al\u0131nd\u0131. Alt paneld\u0259n se\u00E7in.");
+  });
+
   delBtn.addEventListener("click", () => {
     if (!selectedId) return;
     cellsRef.child(selectedId).remove();
@@ -966,10 +1141,9 @@ if (!configured) {
         showToast(`B\u00F6y\u00FCy\u00FCr... ${Math.ceil((1 - p) * GROW_MS / 1000)} s`);
         return;
       }
-      // harvest: move wheat into the warehouse only if there is room
       warehouseRef.transaction(n => {
         n = n || 0;
-        if (n + WHEAT_YIELD > WAREHOUSE_CAP) return;   // abort: no room
+        if (n + WHEAT_YIELD > WAREHOUSE_CAP) return;
         return n + WHEAT_YIELD;
       }).then(res => {
         if (res.committed) {
@@ -992,7 +1166,127 @@ if (!configured) {
     }
   }
 
-  // ----- Canvas pointer: select, drag (grid snapped), tap, barn -----
+  // ----- Fishing -----
+  function handHand() {
+    return { x: me.x + 9 * me.f, y: me.y - 8 };
+  }
+  function pickFish() {
+    const r = Math.random();
+    let acc = 0;
+    for (const k of ["carp", "pike", "bream"]) {
+      acc += FISH[k].weight;
+      if (r < acc) return k;
+    }
+    return "bream";
+  }
+
+  function fishClick(p) {
+    if (!me) return;
+    const now = performance.now();
+    if (fishing.state === "idle") {
+      if (!nearLake(me.x, me.y)) { showToast("G\u00F6l\u00FCn k\u0259nar\u0131na yax\u0131nla\u015F\u0131n."); return; }
+      if (!inLake(p.x, p.y))     { showToast("Suyun \u00FCst\u00FCn\u0259 toxunun."); return; }
+      fishing.state = "cast";
+      fishing.tx = p.x; fishing.ty = p.y;
+      fishing.startT = now;
+      return;
+    }
+    if (fishing.state === "wait") {
+      fishing.state = "idle";
+      showToast("Tilovu geri \u00E7\u0259kdin.");
+      return;
+    }
+    if (fishing.state === "bite") {
+      fishing.type = pickFish();
+      fishing.fromX = fishing.tx; fishing.fromY = fishing.ty;
+      fishing.state = "catch";
+      fishing.startT = now;
+      return;
+    }
+  }
+
+  function updateFishing(now) {
+    if (fishing.state === "idle") return;
+    if (!me) { fishing.state = "idle"; return; }
+    if (fishing.state === "cast" && now - fishing.startT >= 500) {
+      fishing.state = "wait";
+      fishing.biteAt = now + 2000 + Math.random() * 3000;
+    } else if (fishing.state === "wait") {
+      if (!nearLake(me.x, me.y)) { fishing.state = "idle"; showToast("Tilov sular\u0131n uzaq\u0131nda qald\u0131."); return; }
+      if (now >= fishing.biteAt) {
+        fishing.state = "bite";
+        fishing.biteEnd = now + 1800;
+      }
+    } else if (fishing.state === "bite") {
+      if (now >= fishing.biteEnd) {
+        fishing.state = "idle";
+        showToast("Bal\u0131q ka\u00E7d\u0131.");
+      }
+    } else if (fishing.state === "catch" && now - fishing.startT >= 1100) {
+      fishInv[fishing.type] += 1;
+      showToast(`Bal\u0131q tutdun: ${FISH[fishing.type].name}!`);
+      fishing.state = "idle";
+      updateShop();
+    }
+  }
+
+  function bobberPos(now) {
+    const hand = handHand();
+    if (fishing.state === "cast") {
+      const k = clamp((now - fishing.startT) / 500, 0, 1);
+      return { x: lerp(hand.x, fishing.tx, k), y: lerp(hand.y, fishing.ty, k) - Math.sin(Math.PI * k) * 30 };
+    }
+    if (fishing.state === "wait") return { x: fishing.tx, y: fishing.ty + Math.sin(now * 0.005) * 0.8 };
+    if (fishing.state === "bite") return { x: fishing.tx, y: fishing.ty + 3 + Math.sin(now * 0.03) * 1.2 };
+    return null;
+  }
+
+  function drawFishing(gc, now, time) {
+    if (fishing.state === "idle" && selectedTool !== "rod") return;
+    if (!me) return;
+    const hand = handHand();
+
+    if (fishing.state === "catch") {
+      const k = clamp((now - fishing.startT) / 1100, 0, 1);
+      const tx = me.x, ty = me.y - 12;
+      const fx = lerp(fishing.fromX, tx, k);
+      const fy = lerp(fishing.fromY, ty, k) - Math.sin(Math.PI * k) * 42;
+      gc.strokeStyle = "#6d4c41"; gc.lineWidth = 2;
+      gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.lineTo(fx, fy); gc.stroke();
+      drawFish(gc, fx, fy, fishing.type, time, k < 1 ? -0.6 + k * 0.6 : 0);
+      return;
+    }
+
+    if (fishing.state === "idle") {
+      // rod held, no line
+      gc.strokeStyle = "#6d4c41"; gc.lineWidth = 2;
+      gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.lineTo(hand.x + 10 * me.f, hand.y - 14); gc.stroke();
+      return;
+    }
+
+    const b = bobberPos(now);
+    if (!b) return;
+    gc.strokeStyle = "rgba(60,40,30,.8)"; gc.lineWidth = 1;
+    gc.beginPath(); gc.moveTo(hand.x, hand.y); gc.lineTo(b.x, b.y); gc.stroke();
+
+    if (fishing.state === "wait" || fishing.state === "bite") {
+      const k = (now % 1200) / 1200;
+      gc.strokeStyle = `rgba(255,255,255,${0.6 * (1 - k)})`;
+      gc.lineWidth = 1.2;
+      gc.beginPath(); gc.ellipse(b.x, b.y + 2, 3 + k * 9, 1.5 + k * 3, 0, 0, Math.PI * 2); gc.stroke();
+    }
+    gc.fillStyle = "#e53935"; circ(gc, b.x, b.y, 2.4);
+    gc.fillStyle = "#ffffff"; circ(gc, b.x, b.y - 2, 1.6);
+
+    if (fishing.state === "bite") {
+      gc.fillStyle = "#ff1744";
+      gc.font = "bold 12px system-ui, sans-serif";
+      gc.textAlign = "center"; gc.textBaseline = "middle";
+      gc.fillText("!", b.x, b.y - 14);
+    }
+  }
+
+  // ----- Canvas pointer: cells, barn, fishing -----
   function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left - canvas.clientLeft;
@@ -1012,6 +1306,9 @@ if (!configured) {
     } else if (hitBarn(p.x, p.y)) {
       selectedId = null;
       openBarn();
+    } else if (selectedTool === "rod") {
+      selectedId = null;
+      fishClick(p);
     } else {
       selectedId = null;
     }
@@ -1089,6 +1386,7 @@ if (!configured) {
     lastKey = "";
     drag = null;
     selectedId = null;
+    fishing.state = "idle";
     closeShop();
     closeBarnModal();
     Object.keys(remote).forEach(k => delete remote[k]);
@@ -1155,7 +1453,7 @@ if (!configured) {
   // ----- Canvas sizing -----
   function resizeCanvas() {
     const cw = Math.max(220, Math.min(window.innerWidth - 24, 760));
-    const ch = Math.round(Math.min(cw * 0.66, window.innerHeight * 0.6));
+    const ch = Math.round(Math.min(cw * 0.66, window.innerHeight * 0.56));
     canvas.style.width = cw + "px";
     canvas.style.height = ch + "px";
     gameEl.style.width = cw + "px";
@@ -1181,6 +1479,8 @@ if (!configured) {
       }
       sendState(now);
     }
+
+    updateFishing(performance.now());
 
     for (const k in remote) {
       const r = remote[k];
@@ -1212,15 +1512,25 @@ if (!configured) {
     g.fillStyle = "#6fae3c";
     g.fillRect(camX, camY, VW, vh);
     g.drawImage(bgCanvas, 0, 0, W, H);
-    drawWaterfall(g, time);
+    drawWater(g, time);
 
+    // soil: shadows first so every raised tile sits above the grass
+    const ids = Object.keys(cells);
+    ids.forEach(id => {
+      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y } : cells[id];
+      drawCellShadow(g, c);
+    });
     const now = serverNow();
-    for (const id in cells) {
+    ids.forEach(id => {
       const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, crop: cells[id].crop } : cells[id];
       drawCell(g, c, id === selectedId, now);
-    }
+    });
+    ids.forEach(id => {
+      const c = (drag && drag.id === id) ? { x: drag.x, y: drag.y, crop: cells[id].crop } : cells[id];
+      drawCellLabel(g, c, now);
+    });
 
-    // barn is drawn among the other things, sorted by its bottom edge
+    // barn, characters sorted by their bottom edge
     const things = [];
     things.push({ y: BARN.y + BARN.h, draw: () => drawBarn(g) });
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
@@ -1231,6 +1541,9 @@ if (!configured) {
     list.forEach(p => things.push({ y: p.y, draw: () => drawChar(g, p, time, p.label) }));
     things.sort((a, b) => a.y - b.y);
     things.forEach(th => th.draw());
+
+    // fishing line, bobber and fish on top
+    drawFishing(g, performance.now(), time);
   }
 }
 </script>
