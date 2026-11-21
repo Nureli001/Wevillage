@@ -170,6 +170,40 @@
   #barText { font-size: .85rem; text-align: center; }
   #fishList { font-size: .85rem; text-align: center; color: #6d4c41; }
   #seedInfo { font-size: .8rem; text-align: center; color: #8d6e63; }
+
+  /* Main menu */
+  #mainMenu { display: flex; flex-direction: column; align-items: center; gap: 14px; position: relative; z-index: 1; }
+  .board {
+    background: linear-gradient(#b87a3d, #8b5a2b);
+    border: 4px solid #6d4320; border-radius: 22px;
+    padding: 14px 26px 18px; box-shadow: 0 6px 0 #5a3a1c, 0 10px 20px rgba(0,0,0,.25);
+  }
+  .boardText {
+    font-size: 2.2rem; font-weight: 900; letter-spacing: 2px; color: #fff;
+    text-shadow: 0 3px 0 #5a3a1c; text-align: center;
+  }
+  .boardText span { color: #ffd54f; }
+  .menuBtn {
+    width: 240px; padding: 14px; border: none; border-radius: 18px;
+    font-size: 1.15rem; font-weight: 800; color: #fff; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.25); transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .menuBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .menuBtn.play { background: linear-gradient(#7ed37e, #43a047); border: 3px solid #2e7d32; }
+  .menuBtn.set  { background: linear-gradient(#ffd45c, #f0a500); border: 3px solid #b87a00; color: #5d3a00; }
+  .menuBtn.quit { background: linear-gradient(#ff7a6e, #d93c31); border: 3px solid #a82a21; }
+  #menuMsg { color: #3e2723; font-size: .85rem; min-height: 1.2em; text-align: center; text-shadow: 0 1px 0 #fff; }
+
+  .backBtn {
+    align-self: flex-start; border: none; background: transparent; color: #5d4037;
+    font-size: .95rem; font-weight: 700; cursor: pointer; padding: 4px 6px;
+  }
+  .setRow {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    background: #fff; border-radius: 14px; padding: 12px 14px; font-size: .95rem; color: #4e342e;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  }
+  .setRow input { width: 22px; height: 22px; accent-color: #43a047; }
 </style>
 </head>
 <body>
@@ -263,22 +297,42 @@
     <rect x="506" y="560" width="46" height="34" rx="6" fill="#8d6a46" stroke="#6b4a2b" stroke-width="3"/>
   </g>
 </svg>
-<div id="select">
+<div id="mainMenu">
+  <div class="board"><div class="boardText">FERMER<span> OYUNU</span></div></div>
+  <button class="menuBtn play" id="btnPlay">Oyna</button>
+  <button class="menuBtn set" id="btnSettings">T&#601;nziml&#601;m&#601;</button>
+  <button class="menuBtn quit" id="btnQuit">&#199;&#305;x&#305;&#351;</button>
+  <div id="menuMsg"></div>
+</div>
+
+<div id="select" style="display:none">
+  <button class="backBtn" id="btnBack">&larr; Geri</button>
   <div id="logo">
-    <svg viewBox="0 0 120 80" width="96" height="64" aria-hidden="true">
+    <svg viewBox="0 0 120 80" width="84" height="56" aria-hidden="true">
       <circle cx="96" cy="16" r="10" fill="#ffd54f"/>
       <path d="M60 74 L60 40" stroke="#558b2f" stroke-width="4" stroke-linecap="round"/>
       <path d="M60 52 Q40 48 36 30 Q56 32 60 52Z" fill="#7cb342"/>
       <path d="M60 46 Q80 40 86 22 Q66 26 60 46Z" fill="#8bc34a"/>
-      <path d="M60 14 Q55 4 60 -2 Q65 4 60 14Z" fill="#f9a825" transform="translate(0 10)"/>
       <ellipse cx="60" cy="18" rx="5" ry="9" fill="#fbc02d" stroke="#c77800" stroke-width="1"/>
     </svg>
-    <div id="logoText">FERMER</div>
   </div>
   <h1>Karakterini se&ccedil;</h1>
   <button class="choice" id="btn-boy" data-role="boy">O&#287;lan</button>
   <button class="choice" id="btn-girl" data-role="girl">Q&#305;z</button>
-  <div id="status">Y&#252;kl&#601;nir...</div>
+  <div id="status"></div>
+</div>
+
+<div id="settingsModal" class="modal">
+  <div class="card">
+    <div class="head">
+      <h2>T&#601;nziml&#601;m&#601;</h2>
+      <button class="btn small" id="closeSettings">Ba&#287;la</button>
+    </div>
+    <label class="setRow">
+      <span>Gec&#601;-g&#252;nd&#252;z d&#246;vr&#252;</span>
+      <input type="checkbox" id="setDayNight" checked>
+    </label>
+  </div>
 </div>
 
 <div id="game">
@@ -1214,6 +1268,33 @@ function loadInv(role) {
   } catch (e) { return null; }
 }
 
+// ----- Main menu, character select and settings -----
+const mainMenu = document.getElementById("mainMenu");
+const selMenu = document.getElementById("select");
+const settingsModalEl = document.getElementById("settingsModal");
+const setDayNight = document.getElementById("setDayNight");
+const menuMsgEl = document.getElementById("menuMsg");
+let settings = { dayNight: true };
+try {
+  const saved = JSON.parse(localStorage.getItem("fermer_settings") || "null");
+  if (saved) settings = Object.assign(settings, saved);
+} catch (e) {}
+setDayNight.checked = settings.dayNight;
+function saveSettings() {
+  try { localStorage.setItem("fermer_settings", JSON.stringify(settings)); } catch (e) {}
+}
+setDayNight.addEventListener("change", () => { settings.dayNight = setDayNight.checked; saveSettings(); });
+document.getElementById("btnSettings").addEventListener("click", () => settingsModalEl.classList.add("open"));
+document.getElementById("closeSettings").addEventListener("click", () => settingsModalEl.classList.remove("open"));
+settingsModalEl.addEventListener("click", e => { if (e.target === settingsModalEl) settingsModalEl.classList.remove("open"); });
+document.getElementById("btnPlay").addEventListener("click", () => showCharSelect());
+document.getElementById("btnBack").addEventListener("click", () => showMainMenu());
+document.getElementById("btnQuit").addEventListener("click", () => {
+  menuMsgEl.textContent = "Oyundan \u00E7\u0131xmaq \u00FC\u00E7\u00FCn brauzer p\u0259nc\u0259r\u0259sini ba\u011Fla.";
+});
+function showCharSelect() { mainMenu.style.display = "none"; selMenu.style.display = "flex"; }
+function showMainMenu() { selMenu.style.display = "none"; mainMenu.style.display = "flex"; }
+
 const configured = !firebaseConfig.apiKey.startsWith("YOUR_");
 
 if (!configured) {
@@ -1911,7 +1992,7 @@ if (!configured) {
     Object.keys(remote).forEach(k => delete remote[k]);
     statusMsg = msg;
     gameEl.style.display = "none";
-    selectEl.style.display = "flex";
+    showCharSelect();
     document.getElementById("menuDeco").style.display = "";
     refreshButtons();
   }
@@ -1986,6 +2067,7 @@ if (!configured) {
   }
 
   function updateClock(now) {
+    if (!settings.dayNight) { clockEl.textContent = ""; return; }
     const dark = dayDarkness(now);
     clockEl.textContent = dark > 0.5 ? "Gec\u0259" : "G\u00FCnd\u00FCz";
   }
@@ -2060,7 +2142,7 @@ if (!configured) {
     lastCam = { x: camX, y: camY, s };
 
     const now = serverNow();
-    const dark = dayDarkness(now);
+    const dark = settings.dayNight ? dayDarkness(now) : 0;
 
     g.setTransform(dpr * s, 0, 0, dpr * s, -camX * dpr * s, -camY * dpr * s);
     g.fillStyle = "#7cb94a";
