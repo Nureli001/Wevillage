@@ -213,11 +213,36 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.08);
   }
   .setRow input { width: 22px; height: 22px; accent-color: #43a047; }
+
+  /* Artwork menu: the picture already has the title and buttons, so we only add clickable areas */
+  body.withBg #mainMenu {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(100vw, calc(100vh * 1.7762)); aspect-ratio: 1672 / 941; height: auto;
+    gap: 0; padding: 0; background: url(textures/menu_bg.png) center / 100% 100% no-repeat;
+    border-radius: 0; box-shadow: none; z-index: 1;
+  }
+  body.withBg #mainMenu > .board { display: none; }
+  body.withBg #menuDeco { display: none; }
+  body.withBg .menuBtn {
+    position: absolute; left: 37.7%; width: 24.5%; height: 13.8%;
+    padding: 0; margin: 0; background: transparent !important; border: none !important;
+    box-shadow: none !important; color: transparent; font-size: 0; border-radius: 26px;
+  }
+  body.withBg .menuBtn:hover, body.withBg .menuBtn:focus-visible {
+    background: rgba(255,255,255,.14) !important; outline: none;
+  }
+  body.withBg .menuBtn:active { transform: none; }
+  body.withBg .menuBtn.play { top: 43.6%; }
+  body.withBg .menuBtn.set  { top: 60.0%; }
+  body.withBg .menuBtn.quit { top: 74.4%; }
+  body.withBg #menuMsg {
+    position: absolute; left: 0; right: 0; top: 94%; color: #fff; font-size: 1rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,.6);
+  }
 </style>
 </head>
 <body>
 
-<img id="menuBg" src="textures/menu_bg.png" alt="" onload="this.style.display='block';document.getElementById('menuDeco').style.display='none'" onerror="this.remove()">
 <svg id="menuDeco" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs>
     <radialGradient id="sunG" cx="50%" cy="50%" r="50%">
@@ -1307,6 +1332,13 @@ function loadInv(role) {
     return raw ? JSON.parse(raw) : null;
   } catch (e) { return null; }
 }
+
+// Use the artwork as the menu background when it exists
+(function () {
+  const probe = new Image();
+  probe.onload = () => document.body.classList.add("withBg");
+  probe.src = "textures/menu_bg.png";
+})();
 
 // ----- Main menu, character select and settings -----
 const mainMenu = document.getElementById("mainMenu");
