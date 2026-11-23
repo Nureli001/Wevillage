@@ -239,6 +239,12 @@
     position: absolute; left: 0; right: 0; top: 94%; color: #fff; font-size: 1rem;
     text-shadow: 0 2px 4px rgba(0,0,0,.6);
   }
+  #chatBar { display: flex; gap: 6px; width: 100%; align-items: center; }
+  #chatIn {
+    flex: 1; min-width: 0; padding: 8px 12px; border-radius: 14px;
+    border: 2px solid #a1887f; background: #fffdf7; font-size: .9rem; color: #4e342e; outline: none;
+  }
+  #chatIn:focus { border-color: #ffd54f; }
 </style>
 </head>
 <body>
@@ -393,6 +399,7 @@
     <div class="slot off" data-i="3" id="slot3"><b>Qar&#287;&#305;dal&#305;</b><span id="slot3c">0</span></div>
     <div class="slot off" data-i="4" id="slot4"><b>G&#252;n&#601;baxan</b><span id="slot4c">0</span></div>
   </div>
+  <div id="chatBar"><input id="chatIn" maxlength="60" placeholder="Mesaj yaz..."><button class="btn small" id="chatSend">G&#246;nd&#601;r</button></div>
   <div id="joy"><div id="knob"></div></div>
 </div>
 
@@ -442,6 +449,25 @@
   </div>
 </div>
 
+<!-- House modal -->
+<div id="houseModal" class="modal">
+  <div class="card">
+    <div class="head">
+      <h2>Ev</h2>
+      <button class="btn small" id="closeHouse">Ba&#287;la</button>
+    </div>
+    <div id="houseInfo"></div>
+    <div class="row">
+      <div class="icon soil"></div>
+      <div class="grow">
+        <b>Ambar&#305; t&#601;kmill&#601;&#351;dirm&#601;</b><br>
+        <small id="upgradeInfo"></small>
+      </div>
+      <button class="btn" id="upgradeBarn">Al</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -472,10 +498,12 @@ const HEARTBEAT_MS = 5000;
 const CELL = 64;
 const SOIL = { price: 50, refund: 25 };
 const ROD_PRICE = 40;
-const WAREHOUSE_CAP = 40;          // wheat + corn + sunflower (seeds are not counted)
 const START_SEEDS = { sWheat: 6, sCorn: 4, sSun: 4 };
 const START_COINS = 300;
 const BARN = { x: 470, y: 150, w: 150, h: 106 };
+const HOUSE = { x: 1220, y: 250, w: 130, h: 100 };   // main house (ev)
+let barnLevel = 1;                                  // shared upgrade level of the barn
+function barnCap() { return 40 + (barnLevel - 1) * 20; }
 
 // Crops. "seed" is the seed key in the store (taken on planting, one returned on harvest)
 const CROPS = {
@@ -554,6 +582,7 @@ function genTrees() {
     if (PATH_PTS.some(([px, py]) => Math.hypot(px - x, py - y) < 55)) continue;
     if (x > BARN.x - 40 && x < BARN.x + BARN.w + 40 && y > BARN.y - 40 && y < BARN.y + BARN.h + 40) continue;
     if (x > 1120 && y > 720 && y < 860) continue;
+    if (x > HOUSE.x - 50 && x < HOUSE.x + HOUSE.w + 50 && y > HOUSE.y - 50 && y < HOUSE.y + HOUSE.h + 50) continue;
     list.push([x, y]);
   }
   return list;
@@ -564,7 +593,8 @@ const OBST = [
   { t: "rect", x: 0, y: 0, w: 165, h: 150 },
   { t: "rect", x: FALL.x0, y: FALL.y0, w: FALL.x1 - FALL.x0, h: FALL.y1 - FALL.y0 },
   { t: "ell", cx: LAKE.cx, cy: LAKE.cy, rx: LAKE.rx, ry: LAKE.ry },
-  { t: "rect", x: BARN.x, y: BARN.y + 30, w: BARN.w, h: BARN.h - 30 }
+  { t: "rect", x: BARN.x, y: BARN.y + 30, w: BARN.w, h: BARN.h - 30 },
+  { t: "rect", x: HOUSE.x, y: HOUSE.y + 30, w: HOUSE.w, h: HOUSE.h - 30 }
 ];
 TREES.forEach(([x, y]) => OBST.push({ t: "circ", x, y, r: 12 }));
 
@@ -811,6 +841,24 @@ function drawBarn(g) {
   g.closePath(); g.fill();
   g.fillStyle = "#f5f0e6";
   g.fillRect(x + w / 2 - 14, y + 62, 28, h - 62);
+}
+
+// Main house (ev)
+function drawHouse(g) {
+  const { x, y, w, h } = HOUSE;
+  g.fillStyle = "rgba(0,0,0,.2)";
+  g.beginPath(); g.ellipse(x + w / 2, y + h + 2, w / 2 + 6, 7, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#fff3e0";
+  rr(g, x + 8, y + 40, w - 16, h - 40, 6);
+  g.fillStyle = "#5d4037";
+  g.fillRect(x + w - 30, y - 6, 12, 26);
+  g.fillStyle = "#c62828";
+  g.beginPath(); g.moveTo(x - 6, y + 44); g.lineTo(x + w / 2, y - 6); g.lineTo(x + w + 6, y + 44); g.closePath(); g.fill();
+  g.fillStyle = "#8d6e63";
+  g.fillRect(x + w / 2 - 9, y + h - 36, 18, 36);
+  g.fillStyle = "#90caf9";
+  g.fillRect(x + 22, y + 58, 22, 18);
+  g.fillRect(x + w - 44, y + 58, 22, 18);
 }
 
 function drawLampPost(g, L) {
@@ -1292,6 +1340,26 @@ function drawOffscreenOrders(gc, customers, now, cw, ch, s, camX, camY, dpr) {
   }
 }
 
+// Chat bubble above a character (visible for 5 seconds, then fades)
+function drawChatBubble(gc, p, m, now) {
+  if (!m) return;
+  const age = now - m.t;
+  if (age < 0 || age > 5000) return;
+  const text = m.text.length > 30 ? m.text.slice(0, 29) + "..." : m.text;
+  gc.font = "bold 10px system-ui, sans-serif";
+  const w = gc.measureText(text).width + 16;
+  const a = age > 4300 ? (5000 - age) / 700 : 1;
+  const x = p.x, y = p.y - 54;
+  gc.save();
+  gc.globalAlpha = Math.max(0, Math.min(1, a));
+  gc.fillStyle = "rgba(255,255,255,.96)";
+  rr(gc, x - w / 2, y - 10, w, 18, 9);
+  gc.fillStyle = "#4e342e";
+  gc.textAlign = "center"; gc.textBaseline = "middle";
+  gc.fillText(text, x, y - 1);
+  gc.restore();
+}
+
 // ---------- App ----------
 const statusEl  = document.getElementById("status");
 const selectEl  = document.getElementById("select");
@@ -1314,6 +1382,10 @@ const fishListEl= document.getElementById("fishList");
 const delBtn    = document.getElementById("del-plot");
 const toastEl   = document.getElementById("toast");
 const barnModal = document.getElementById("barnModal");
+const houseModal = document.getElementById("houseModal");
+const upgradeBtn = document.getElementById("upgradeBarn");
+const houseInfoEl = document.getElementById("houseInfo");
+const upgradeInfoEl = document.getElementById("upgradeInfo");
 const closeBarn = document.getElementById("closeBarn");
 const barFill   = document.getElementById("barFill");
 const barText   = document.getElementById("barText");
@@ -1436,10 +1508,11 @@ if (!configured) {
     d: [1, 0],  arrowright: [1, 0]
   };
   function anyModalOpen() {
-    return shopModal.classList.contains("open") || barnModal.classList.contains("open");
+    return shopModal.classList.contains("open") || barnModal.classList.contains("open") || houseModal.classList.contains("open");
   }
   document.addEventListener("keydown", e => {
     touch();
+    if (e.target && e.target.tagName === "INPUT") return;
     const k = e.key.toLowerCase();
     if (KEYS[k] && !anyModalOpen()) { e.preventDefault(); keysDown.add(k); }
   });
@@ -1580,7 +1653,34 @@ if (!configured) {
     updateHotbar();
   });
 
+  // ----- Chat: a message shows above its author for 5 seconds -----
+  const chatRef = roomRef.child("chat");
+  const latestMsg = {};
+  chatRef.limitToLast(30).on("child_added", snap => {
+    const m = snap.val();
+    if (!m) return;
+    if (m.t > serverNow() - 5000) latestMsg[m.role] = m;   // only fresh messages
+  });
+
+  function sendChat(text) {
+    if (!me) return;
+    const clean = (text || "").trim().slice(0, 60);
+    if (!clean) return;
+    chatRef.push({ role: me.role, name: CHARS[me.role].name, text: clean, t: serverNow() });
+  }
+  const chatIn = document.getElementById("chatIn");
+  document.getElementById("chatSend").addEventListener("click", () => { sendChat(chatIn.value); chatIn.value = ""; });
+  chatIn.addEventListener("keydown", e => {
+    if (e.key === "Enter") { sendChat(chatIn.value); chatIn.value = ""; }
+  });
+
   let knownCust = null;
+  roomRef.child("meta/barnLevel").on("value", snap => {
+    barnLevel = snap.val() || 1;
+    updateBarn();
+    updateHouse();
+  });
+
   customersRef.on("value", snap => {
     customers = snap.val() || {};
     const ids = Object.keys(customers);
@@ -1614,6 +1714,10 @@ if (!configured) {
       if (wx >= c.x && wx <= c.x + CELL && wy >= c.y && wy <= c.y + CELL) return id;
     }
     return null;
+  }
+  function hitHouse(wx, wy) {
+    const m = 6;
+    return wx >= HOUSE.x - m && wx <= HOUSE.x + HOUSE.w + m && wy >= HOUSE.y - m && wy <= HOUSE.y + HOUSE.h + m;
   }
   function hitBarn(wx, wy) {
     const m = 6;
@@ -1696,6 +1800,31 @@ if (!configured) {
     saveInv();
   }
 
+  // ----- House modal: barn upgrades -----
+  function openHouse() { touch(); houseModal.classList.add("open"); updateHouse(); }
+  function closeHouseModal() { houseModal.classList.remove("open"); }
+  document.getElementById("closeHouse").addEventListener("click", closeHouseModal);
+  houseModal.addEventListener("click", e => { if (e.target === houseModal) closeHouseModal(); });
+
+  function barnUpgradeCost() { return 100 * barnLevel; }
+  function updateHouse() {
+    houseInfoEl.textContent = `Ambar s\u0259viyy\u0259si: ${barnLevel}  \u00B7  Tutum: ${barnCap()}`;
+    upgradeInfoEl.textContent = `N\u0259vb\u0259ti tutum: ${barnCap() + 20}  \u00B7  Qiym\u0259t: ${barnUpgradeCost()} pul`;
+    upgradeBtn.disabled = !me || coins < barnUpgradeCost();
+  }
+  upgradeBtn.addEventListener("click", () => {
+    if (!me) return;
+    touch();
+    const cost = barnUpgradeCost();
+    if (coins < cost) { showToast("Pulunuz \u00E7atm\u0131r."); return; }
+    roomRef.child("meta/barnLevel").transaction(v => (v || 1) + 1).then(res => {
+      if (!res.committed) { showToast("Yenil\u0259n\u0259 bilm\u0259di, yenid\u0259n c\u0259hd edin."); return; }
+      coins -= cost;
+      updateShop();
+      showToast(`Ambar t\u0259kmill\u0259\u015Fdirildi: tutum ${barnCap()}`);
+    });
+  });
+
   // ----- Barn modal -----
   function openBarn() { touch(); barnModal.classList.add("open"); updateBarn(); }
   function closeBarnModal() { barnModal.classList.remove("open"); }
@@ -1703,11 +1832,12 @@ if (!configured) {
   barnModal.addEventListener("click", e => { if (e.target === barnModal) closeBarnModal(); });
 
   function updateBarn() {
+    updateHouse();
     const used = store.wheat + store.corn + store.sunflower;
-    const free = Math.max(0, WAREHOUSE_CAP - used);
-    const pct = Math.min(100, (used / WAREHOUSE_CAP) * 100);
+    const free = Math.max(0, barnCap() - used);
+    const pct = Math.min(100, (used / barnCap()) * 100);
     barFill.style.width = pct + "%";
-    barText.textContent = `Tutum: ${WAREHOUSE_CAP}  \u00B7  \u0130stifad\u0259 olunub: ${used}  \u00B7  Bo\u015F yer: ${free}`;
+    barText.textContent = `Tutum: ${barnCap()}  \u00B7  \u0130stifad\u0259 olunub: ${used}  \u00B7  Bo\u015F yer: ${free}`;
     barList.textContent = `Bu\u011Fda: ${store.wheat} \u00B7 Qar\u011F\u0131dal\u0131: ${store.corn} \u00B7 G\u00FCn\u0259baxan: ${store.sunflower}`;
   }
 
@@ -1767,7 +1897,7 @@ if (!configured) {
     storeRef.transaction(v => {
       v = v || {};
       const total = (v.wheat || 0) + (v.corn || 0) + (v.sunflower || 0);
-      if (total + def.yield > WAREHOUSE_CAP) return;   // no room: abort
+      if (total + def.yield > barnCap()) return;   // no room: abort
       const nv = Object.assign({}, v);
       nv[kind] = (v[kind] || 0) + def.yield;
       nv[def.seed] = (v[def.seed] || 0) + 1;            // one seed returns to the store
@@ -1966,6 +2096,9 @@ if (!configured) {
       const c = cells[id];
       drag = { id, ox: p.x - c.x, oy: p.y - c.y, x: c.x, y: c.y, sx: p.x, sy: p.y, moved: false, lastSent: 0 };
       canvas.setPointerCapture(e.pointerId);
+    } else if (hitHouse(p.x, p.y)) {
+      selectedId = null;
+      openHouse();
     } else if (hitBarn(p.x, p.y)) {
       selectedId = null;
       openBarn();
@@ -2263,6 +2396,7 @@ if (!configured) {
 
     const things = [];
     things.push({ y: BARN.y + BARN.h, draw: () => drawBarn(g) });
+    things.push({ y: HOUSE.y + HOUSE.h, draw: () => drawHouse(g) });
     LAMPS.forEach(L => things.push({ y: L.y + 14, draw: () => drawLampPost(g, L) }));
 
     const list = [{ role: me.role, x: me.x, y: me.y, f: me.f, m: me.m, label: "S\u0259n" }];
@@ -2277,6 +2411,7 @@ if (!configured) {
       g.translate(-p.x, -p.y);
       drawChar(g, p, time, p.label);
       g.restore();
+      drawChatBubble(g, p, latestMsg[p.role], now);
     } }));
 
     for (const id of Object.keys(customers)) {
